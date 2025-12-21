@@ -8,7 +8,15 @@ const Scene = () => {
     return (
         <div style={{ width: '100vw', height: '100vh' }}>
             <ErrorBoundary>
-                <Canvas dpr={[1, 2]} camera={{ fov: 50 }}>
+                <Canvas
+                    dpr={[1, 2]}
+                    camera={{ fov: 50 }}
+                    gl={{
+                        antialias: true,
+                        logarithmicDepthBuffer: true, // Better depth precision
+                        powerPreference: 'high-performance'
+                    }}
+                >
                     <Suspense fallback={null}>
                         <Stage environment="city" intensity={0.6} adjustCamera={false}>
                             <ConfiguratorModel />

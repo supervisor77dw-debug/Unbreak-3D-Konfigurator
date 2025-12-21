@@ -6,14 +6,14 @@ const ModuleSelector = () => {
     const { module, setModule } = useConfigurator();
 
     const modules = [
-        { id: 'wine', label: 'Wine Glass Holder' },
-        { id: 'champagne', label: 'Champagne Holder' },
-        { id: 'rubber', label: 'Rubber Insert' },
+        { id: 'wine', label: 'Weinglas-Halter' },
+        { id: 'champagne', label: 'Champagner-Halter' },
+        { id: 'rubber', label: 'Gummi-Aufsatz' },
     ];
 
     return (
         <div className={styles.container}>
-            <h3>Module Selection</h3>
+            <h3>Glasvariante</h3>
             <div className={styles.grid}>
                 {modules.map((m) => (
                     <button

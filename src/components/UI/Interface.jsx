@@ -34,7 +34,7 @@ const Interface = () => {
         };
 
         console.log('Checkout Configuration:', output);
-        alert(`Added to Cart!\nCheck console for JSON output.`);
+        alert(`Zum Warenkorb hinzugefügt!\nKonfiguration in der Konsole anzeigen.`);
     };
 
     return (
@@ -42,33 +42,33 @@ const Interface = () => {
             <div className={styles.sidebar}>
                 <div className={styles.header}>
                     <h1>UNBREAK1</h1>
-                    <p>Configure your setup</p>
+                    <p>Konfigurieren Sie Ihr Produkt</p>
                 </div>
 
                 <div className={styles.content}>
                     {/* Variant Selection */}
                     <div className={styles.section}>
-                        <h3>Product Type</h3>
+                        <h3>Produktvariante</h3>
                         <div className={styles.tabs}>
                             <button
                                 className={`${styles.tab} ${variant === 'glass_holder' ? styles.activeTab : ''} `}
                                 onClick={() => setVariant('glass_holder')}
                             >
-                                Glass Holder
+                                Glashalter
                             </button>
                             <button
                                 className={`${styles.tab} ${variant === 'bottle_holder' ? styles.activeTab : ''} `}
                                 onClick={() => setVariant('bottle_holder')}
                             >
-                                Bottle Holder
+                                Flaschen + Glashalter
                             </button>
                         </div>
                     </div>
 
                     {variant === 'bottle_holder' ? (
                         <div className={styles.comingSoon}>
-                            <p>Coming Soon</p>
-                            <small>This product variant is currently in development.</small>
+                            <p>Demnächst verfügbar</p>
+                            <small>Diese Produktvariante befindet sich derzeit in Entwicklung.</small>
                         </div>
                     ) : (
                         <>
@@ -78,7 +78,7 @@ const Interface = () => {
 
                             {/* Pattern Toggle */}
                             <div className={styles.section}>
-                                <h3>Pattern</h3>
+                                <h3>Muster</h3>
                                 <label className={styles.toggle}>
                                     <input
                                         type="checkbox"
@@ -86,7 +86,7 @@ const Interface = () => {
                                         onChange={togglePattern}
                                     />
                                     <span className={styles.label}>
-                                        Add Windrose Pattern (+15€)
+                                        Windrose-Muster hinzufügen (+15€)
                                     </span>
                                 </label>
                             </div>
@@ -104,7 +104,7 @@ const Interface = () => {
                         onClick={handleAddToCart}
                         disabled={variant === 'bottle_holder'}
                     >
-                        {variant === 'bottle_holder' ? 'Not Available' : 'Add to Cart / Order'}
+                        {variant === 'bottle_holder' ? 'Nicht verfügbar' : 'In den Warenkorb'}
                     </button>
                 </div>
             </div>

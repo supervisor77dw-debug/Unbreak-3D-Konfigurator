@@ -27,9 +27,9 @@ const ColorPicker = () => {
 
     return (
         <div className={styles.container}>
-            <h3>Customization</h3>
+            <h3>Farbauswahl</h3>
             <ColorSection
-                title="Base Plate"
+                title="Grundplatte"
                 activeColor={colors.base}
                 onSelect={(color) => updateColor('base', color)}
             />
@@ -39,14 +39,14 @@ const ColorPicker = () => {
                 onSelect={(color) => updateColor('arm', color)}
             />
             <ColorSection
-                title="Module (Rubber Insert)"
+                title="Modul (Gummi-Aufsatz)"
                 activeColor={colors.module}
                 onSelect={(color) => updateColor('module', color)}
             />
 
             {pattern.enabled && (
                 <ColorSection
-                    title="Pattern (Windrose)"
+                    title="Muster (Windrose)"
                     activeColor={colors.pattern}
                     onSelect={(color) => updateColor('pattern', color)}
                 />
