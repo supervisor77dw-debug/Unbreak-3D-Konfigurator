@@ -1,3 +1,4 @@
+// [SYNC 2025-12-23] Final Clean Sync
 import React, { useRef, useMemo, useEffect } from 'react';
 import { useConfigurator } from '../../context/ConfiguratorContext';
 import { useGLTF } from '@react-three/drei';
