@@ -23,28 +23,34 @@ const ColorSection = ({ title, activeColor, onSelect }) => {
 };
 
 const ColorPicker = () => {
-    const { colors, updateColor, pattern } = useConfigurator();
+    const { colors, updateColor, pattern, variant } = useConfigurator();
+    const isBottleHolder = variant === 'bottle_holder';
 
     return (
         <div className={styles.container}>
             <h3>Farbauswahl</h3>
-            <ColorSection
-                title="Grundplatte"
-                activeColor={colors.base}
-                onSelect={(color) => updateColor('base', color)}
-            />
-            <ColorSection
-                title="Arm"
-                activeColor={colors.arm}
-                onSelect={(color) => updateColor('arm', color)}
-            />
-            <ColorSection
-                title="Modul (Gummi-Aufsatz)"
-                activeColor={colors.module}
-                onSelect={(color) => updateColor('module', color)}
-            />
 
-            {pattern.enabled && (
+            {!isBottleHolder && (
+                <>
+                    <ColorSection
+                        title="Grundplatte"
+                        activeColor={colors.base}
+                        onSelect={(color) => updateColor('base', color)}
+                    />
+                    <ColorSection
+                        title="Arm"
+                        activeColor={colors.arm}
+                        onSelect={(color) => updateColor('arm', color)}
+                    />
+                    <ColorSection
+                        title="Modul (Gummi-Aufsatz)"
+                        activeColor={colors.module}
+                        onSelect={(color) => updateColor('module', color)}
+                    />
+                </>
+            )}
+
+            {(isBottleHolder || pattern.enabled) && (
                 <ColorSection
                     title="Muster (Windrose)"
                     activeColor={colors.pattern}

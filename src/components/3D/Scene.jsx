@@ -18,11 +18,12 @@ const Scene = () => {
                     }}
                 >
                     <Suspense fallback={null}>
-                        <Stage environment="city" intensity={0.6} adjustCamera={false}>
-                            <ConfiguratorModel />
-                        </Stage>
+                        <ConfiguratorModel />
                         <OrbitControls makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 1.75} />
                         <Environment preset="studio" />
+                        <ambientLight intensity={1.5} />
+                        <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow />
+                        <directionalLight position={[-5, 5, -5]} intensity={0.5} />
                     </Suspense>
                 </Canvas>
             </ErrorBoundary>

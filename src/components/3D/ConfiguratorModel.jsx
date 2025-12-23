@@ -11,42 +11,62 @@ const ASSETS = {
     arm: '/assets/models/U1_Arm.glb',
     insert: '/assets/models/U1_Insert_Rubber.glb',
     pattern: '/assets/models/U1_Pattern_Windrose.glb',
+    // New Bottle Holder Assets
+    bottleBody: '/assets/models/U1_Flaschenhalter.glb',
+    bottleBase: '/assets/models/U1_Base_Flaschenhalter.glb',
+    bottleRose: '/assets/models/U1_Rose_Flaschenhalter.glb',
 };
 
 // Part loader with optional smooth normals for specific parts
-const Part = ({ url, color, renderOrder = 0, smoothNormals = false }) => {
+const Part = ({ url, color, renderOrder = 0, smoothNormals = false, isFixedBlack = false }) => {
     const { scene } = useGLTF(url);
     const clone = useMemo(() => scene.clone(), [scene]);
 
     useEffect(() => {
         clone.traverse((child) => {
-            if (child.isMesh) {
-                // Security: Vertex jitter only
-                if (!child.userData.isObfuscated) {
+            // Apply single material to everything that can be rendered
+            if (child.isMesh || child.isLine || child.isPoints || child.type.includes('Line') || child.type.includes('Points')) {
+                // 1. Security: Vertex jitter
+                if (!child.userData.isObfuscated && child.geometry) {
                     obfuscateGeometry(child.geometry);
                     child.userData.isObfuscated = true;
                 }
 
-                // Smooth normals only for specified parts (U1_Arm)
-                // Vereinheitlicht Vertex-Normalen für durchgehend glatte Oberfläche
-                if (smoothNormals && !child.userData.normalsSmoothed) {
+                // 2. Smooth normals only for specified parts
+                if (smoothNormals && child.isMesh && !child.userData.normalsSmoothed) {
                     child.geometry.computeVertexNormals();
                     child.userData.normalsSmoothed = true;
                 }
 
-                // Apply color with smooth shading
-                child.material = new THREE.MeshStandardMaterial({
-                    color: color,
-                    roughness: 0.75,
+                // 3. Robust Material Override
+                // For fixed black parts (holder body/base), we use a steady matte black
+                const finalColor = isFixedBlack ? '#1a1a1a' : color;
+
+                const material = new THREE.MeshStandardMaterial({
+                    color: finalColor,
+                    roughness: 0.85, // Matt/Seidenmatt
                     metallic: 0.0,
                     flatShading: false,
-                    side: THREE.FrontSide,
+                    side: THREE.DoubleSide,
+                    vertexColors: false,
                 });
+
+                child.material = material;
+
+                // 4. Clear any geometry groups or vertex colors
+                if (child.geometry) {
+                    if (child.geometry.groups && child.geometry.groups.length > 0) {
+                        child.geometry.clearGroups();
+                    }
+                    if (child.geometry.attributes.color) {
+                        child.geometry.deleteAttribute('color');
+                    }
+                }
 
                 child.renderOrder = renderOrder;
             }
         });
-    }, [clone, color, renderOrder, smoothNormals]);
+    }, [clone, color, renderOrder, smoothNormals, isFixedBlack, url]);
 
     return <primitive object={clone} />;
 };
@@ -94,27 +114,31 @@ const ConfiguratorModel = () => {
         }
     });
 
+    // ASSEMBLY LOGIC
     if (variant === 'bottle_holder') {
-        return null;
+        return (
+            <group ref={group} dispose={null} scale={scale}>
+                {/* 
+                  MANDATORY BINDING:
+                  Bottle Holder uses a specific Windrose asset (U1_Rose_Flaschenhalter.glb)
+                  that matches its internal geometry depth/height.
+                */}
+                <Part url={ASSETS.bottleBase} color={patternColor} renderOrder={0} isFixedBlack={true} />
+                <Part url={ASSETS.bottleBody} color={patternColor} renderOrder={1} isFixedBlack={true} />
+                <Part url={ASSETS.bottleRose} color={patternColor} renderOrder={2} isFixedBlack={false} />
+            </group>
+        );
     }
 
     return (
         <group ref={group} dispose={null} scale={scale}>
             {/* 
-             Assembly: Baseplate (unten) -> Arm -> Insert -> Pattern
-             Modelle sind visuell final - keine Depth-Tricks nötig
+             GLASHALTER ASSEMBLY: 
+             Baseplate -> Arm -> Insert -> Pattern
             */}
-
-            {/* Baseplate - renderOrder 0 (zuerst, liegt darunter) */}
             <Part url={ASSETS.baseplate} color={baseplateColor} renderOrder={0} />
-
-            {/* Arm - renderOrder 1, smoothNormals für glatte Oberfläche */}
             <Part url={ASSETS.arm} color={armColor} renderOrder={1} smoothNormals={true} />
-
-            {/* Rubber Insert */}
             <Part url={ASSETS.insert} color={insertColor} renderOrder={2} />
-
-            {/* Optional Pattern (Windrose) */}
             {pattern.enabled && (
                 <Part url={ASSETS.pattern} color={patternColor} renderOrder={3} />
             )}

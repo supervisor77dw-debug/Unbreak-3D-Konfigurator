@@ -66,10 +66,20 @@ const Interface = () => {
                     </div>
 
                     {variant === 'bottle_holder' ? (
-                        <div className={styles.comingSoon}>
-                            <p>Demnächst verfügbar</p>
-                            <small>Diese Produktvariante befindet sich derzeit in Entwicklung.</small>
-                        </div>
+                        <>
+                            {/* For Bottle Holder, only the Windrose Pattern is configurable */}
+                            <div className={styles.section}>
+                                <h3>Muster-Konfiguration</h3>
+                                <p className={styles.info}>
+                                    Der Flaschenhalter wird in edlem Matt-Schwarz geliefert.
+                                    Die integrierte Windrose kann farblich angepasst werden.
+                                </p>
+                            </div>
+
+                            <hr className={styles.divider} />
+
+                            <ColorPicker />
+                        </>
                     ) : (
                         <>
                             <ModuleSelector />
@@ -102,9 +112,8 @@ const Interface = () => {
                     <button
                         className={styles.addToCart}
                         onClick={handleAddToCart}
-                        disabled={variant === 'bottle_holder'}
                     >
-                        {variant === 'bottle_holder' ? 'Nicht verfügbar' : 'In den Warenkorb'}
+                        In den Warenkorb
                     </button>
                 </div>
             </div>
