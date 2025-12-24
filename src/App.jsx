@@ -1,16 +1,91 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ConfiguratorProvider } from './context/ConfiguratorContext';
 import Scene from './components/3D/Scene';
-import Interface from './components/UI/Interface';
+import TopBar from './components/UI/TopBar';
+import PanelHost from './components/UI/PanelHost';
+import { notifyLoading, initTimeoutFallback } from './utils/iframeBridge';
+import { useConfigurator } from './context/ConfiguratorContext';
 import './index.css';
 
+function ConfiguratorContent() {
+  const { variant, setVariant, colors } = useConfigurator();
+  const [activePanel, setActivePanel] = useState(null);
+
+  const handleAddToCart = () => {
+    const output = {
+      product_name: 'UNBREAK ONE',
+      product_variant: variant,
+      colors: {
+        baseplate: colors.base,
+        arm: colors.arm,
+        insert: colors.module,
+        pattern: colors.pattern,
+      },
+      security: {
+        obfuscation_enabled: true
+      }
+    };
+
+    console.log('Checkout Configuration:', output);
+    alert(`Zum Warenkorb hinzugefügt!\nKonfiguration in der Konsole anzeigen.`);
+  };
+
+  const handleResetView = () => {
+    if (window.resetCameraView) {
+      window.resetCameraView();
+    }
+  };
+
+  return (
+    <div className="app-container">
+      <TopBar 
+        activePanel={activePanel}
+        onPanelToggle={setActivePanel}
+        variant={variant}
+        setVariant={setVariant}
+      />
+      
+      <div className="canvas-wrapper">
+        <Scene />
+      </div>
+
+      <PanelHost 
+        activePanel={activePanel}
+        onClose={() => setActivePanel(null)}
+        variant={variant}
+      >
+        {/* Actions Panel Content */}
+        <button
+          className="action-button reset-view"
+          onClick={handleResetView}
+        >
+          🔄 Ansicht zurücksetzen
+        </button>
+        <button
+          className="action-button add-to-cart"
+          onClick={handleAddToCart}
+        >
+          In den Warenkorb
+        </button>
+      </PanelHost>
+    </div>
+  );
+}
+
 function App() {
+  // Send LOADING signal on mount and setup timeout fallback
+  useEffect(() => {
+    notifyLoading(0);
+    console.log('[App] Sent LOADING signal to parent');
+    
+    // Setup 12s timeout fallback
+    const cleanup = initTimeoutFallback(12000);
+    return cleanup;
+  }, []);
+
   return (
     <ConfiguratorProvider>
-      <div className="app-container">
-        <Scene />
-        <Interface />
-      </div>
+      <ConfiguratorContent />
     </ConfiguratorProvider>
   );
 }

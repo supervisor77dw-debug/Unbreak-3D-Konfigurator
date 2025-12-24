@@ -6,7 +6,11 @@ import ConfiguratorModel from './ConfiguratorModel';
 
 const Scene = () => {
     return (
-        <div style={{ width: '100vw', height: '100vh' }}>
+        <div style={{ 
+            width: '100vw', 
+            height: '100dvh',
+            minHeight: '60dvh'
+        }}>
             <ErrorBoundary>
                 <Canvas
                     dpr={[1, 2]}

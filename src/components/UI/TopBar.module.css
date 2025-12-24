@@ -1,0 +1,170 @@
+/* TopBar.module.css */
+.topBar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(10, 10, 10, 0.95);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    z-index: 50;
+    padding-top: env(safe-area-inset-top, 0);
+}
+
+.container {
+    max-width: 100%;
+    height: 100%;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+/* Brand Section */
+.brand {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.brandName {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--unbreak-cyan);
+    margin: 0;
+}
+
+.brandSub {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Variant Toggle */
+.variantToggle {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    border-radius: 8px;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.variantBtn {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.variantBtn:hover {
+    background: rgba(0, 212, 255, 0.08);
+    color: white;
+}
+
+.variantBtn.active {
+    background: rgba(0, 212, 255, 0.15);
+    color: var(--unbreak-cyan);
+    font-weight: 600;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.actionBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.actionBtn:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: rgba(0, 212, 255, 0.3);
+    color: var(--unbreak-cyan);
+}
+
+.actionBtn.activePanel {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.4);
+    color: var(--unbreak-cyan);
+}
+
+.icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.label {
+    font-size: 0.85rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .container {
+        padding: 0 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .brandSub {
+        display: none;
+    }
+
+    .brandName {
+        font-size: 0.95rem;
+    }
+
+    .variantToggle {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .variantBtn {
+        flex: 1;
+        padding: 0.5rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .actionBtn .label {
+        display: none;
+    }
+
+    .actionBtn {
+        padding: 0.6rem 0.75rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .topBar {
+        height: 52px;
+    }
+
+    .icon {
+        font-size: 1rem;
+    }
+}

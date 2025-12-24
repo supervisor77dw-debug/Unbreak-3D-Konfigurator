@@ -1,4 +1,5 @@
 import React from 'react';
+import { notifyError } from '../utils/iframeBridge';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -12,6 +13,12 @@ class ErrorBoundary extends React.Component {
 
     componentDidCatch(error, errorInfo) {
         console.error("ErrorBoundary caught an error", error, errorInfo);
+        
+        // Notify parent window of error
+        notifyError(
+            error?.message || '3D Scene initialization error',
+            error?.stack || errorInfo?.componentStack
+        );
     }
 
     render() {

@@ -1,9 +1,10 @@
-// [SYNC 2025-12-24] Added Auto-Fit Camera to Model
+// [SYNC 2025-12-24] Added Auto-Fit Camera to Model + iframe Bridge
 import React, { useRef, useMemo, useEffect } from 'react';
 import { useConfigurator } from '../../context/ConfiguratorContext';
 import { useGLTF } from '@react-three/drei';
 import { useThree, useFrame } from '@react-three/fiber';
 import { getObfuscatedScale, obfuscateGeometry } from '../../utils/obfuscation';
+import { notifyReady } from '../../utils/iframeBridge';
 import * as THREE from 'three';
 
 /**
@@ -188,6 +189,7 @@ const ConfiguratorModel = () => {
     const group = useRef();
     const { camera, controls } = useThree();
     const hasFittedCamera = useRef(false);
+    const hasNotifiedReady = useRef(false);
 
     // Auto-fit camera when variant changes or on initial load
     useEffect(() => {
@@ -198,6 +200,19 @@ const ConfiguratorModel = () => {
                 const duration = isFirstLoad ? 550 : 300; // 550ms intro, 300ms variant switch
                 fitCameraToObject(camera, group.current, controls, 1.3, true, duration, isFirstLoad);
                 hasFittedCamera.current = true;
+
+                // READY Signal: Send after first load + camera fit + 1 frame rendered
+                // This ensures the 3D model is fully loaded, positioned, and at least 1 frame is rendered
+                if (isFirstLoad && !hasNotifiedReady.current) {
+                    requestAnimationFrame(() => {
+                        // Wait for 1 additional frame to ensure rendering is complete
+                        requestAnimationFrame(() => {
+                            notifyReady('1.0.0');
+                            hasNotifiedReady.current = true;
+                            console.log('[ConfiguratorModel] READY signal sent to parent window');
+                        });
+                    });
+                }
             }, 100);
             return () => clearTimeout(timer);
         }

@@ -29,6 +29,94 @@
   --text-secondary: #a0a0a0;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* iFrame optimization: no double scroll */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  /* Premium Dark Gradient */
+  background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
+  color: var(--text-primary);
+  min-width: 320px;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* App Container - Flex Column Layout */
+.app-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Canvas Wrapper - Takes remaining space */
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  min-height: 0; /* Important for flex child */
+  overflow: hidden;
+}
+
+/* Action Buttons in Panel */
+.action-button {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  text-transform: none;
+}
+
+.action-button.reset-view {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-button.reset-view:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+  color: var(--unbreak-cyan);
+  transform: translateY(-2px);
+}
+
+.action-button.add-to-cart {
+  background: linear-gradient(135deg, var(--unbreak-cyan), var(--unbreak-cyan-dark));
+  color: var(--unbreak-black);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.action-button.add-to-cart:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
+  filter: brightness(1.1);
+}
+
+.action-button.add-to-cart:active {
+  transform: translateY(-1px);
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -37,23 +125,6 @@ a {
 
 a:hover {
   color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  /* Premium Dark Gradient */
-  background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
-  color: var(--text-primary);
-  overflow: hidden;
-}
-
-#root {
-  width: 100%;
-  height: 100vh;
 }
 
 h1 {

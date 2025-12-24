@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import ModuleSelector from './ModuleSelector';
 import ColorPicker from './ColorPicker';
 import { useConfigurator, COLOR_PALETTE } from '../../context/ConfiguratorContext';
@@ -10,6 +10,8 @@ const Interface = () => {
         variant, setVariant,
         colors
     } = useConfigurator();
+    
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const handleAddToCart = () => {
         // Updated Order Logic
@@ -38,12 +40,34 @@ const Interface = () => {
     };
 
     return (
-        <div className={styles.interface}>
-            <div className={styles.sidebar}>
-                <div className={styles.header}>
-                    <h1>UNBREAK ONE</h1>
-                    <p>Produktkonfigurator</p>
-                </div>
+        <>
+            {/* Mobile Header */}
+            <div className={styles.mobileHeader}>
+                <div className={styles.mobileBrand}>UNBREAK ONE</div>
+                <button 
+                    className={styles.mobileMenuButton}
+                    onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+                    aria-label="Menü öffnen"
+                >
+                    {isDrawerOpen ? '✕' : '⚙️'}
+                </button>
+            </div>
+
+            {/* Backdrop for Mobile Drawer */}
+            {isDrawerOpen && (
+                <div 
+                    className={styles.backdrop}
+                    onClick={() => setIsDrawerOpen(false)}
+                />
+            )}
+
+            {/* Desktop Sidebar / Mobile Drawer */}
+            <div className={styles.interface}>
+                <div className={`${styles.sidebar} ${isDrawerOpen ? styles.drawerOpen : ''}`}>
+                    <div className={styles.header}>
+                        <h1>UNBREAK ONE</h1>
+                        <p>Produktkonfigurator</p>
+                    </div>
 
                 <div className={styles.content}>
                     {/* Variant Selection */}
@@ -93,8 +117,9 @@ const Interface = () => {
                         In den Warenkorb
                     </button>
                 </div>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 

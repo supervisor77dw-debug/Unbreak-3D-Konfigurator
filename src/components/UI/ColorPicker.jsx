@@ -28,8 +28,6 @@ const ColorPicker = () => {
 
     return (
         <div className={styles.container}>
-            <h3>Farbauswahl</h3>
-
             {!isBottleHolder && (
                 <>
                     <ColorSection
