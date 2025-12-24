@@ -18,14 +18,29 @@ const ASSETS = {
     bottleRose: '/assets/models/U1_Rose_Flaschenhalter.glb',
 };
 
-// Part loader with optional smooth normals for specific parts
-const Part = ({ url, color, renderOrder = 0, smoothNormals = false, isFixedBlack = false }) => {
+// Part loader with premium material refinement and smooth color transitions
+const Part = ({ url, color, renderOrder = 0, smoothNormals = false, isFixedBlack = false, isAccent = false }) => {
     const { scene } = useGLTF(url);
     const clone = useMemo(() => scene.clone(), [scene]);
+    const materialRef = useRef();
+    const targetColor = useMemo(() => new THREE.Color(color), [color]);
+    const currentColor = useMemo(() => new THREE.Color(color), []);
+
+    // Create a shared premium material
+    const premiumMaterial = useMemo(() => {
+        return new THREE.MeshStandardMaterial({
+            color: isFixedBlack ? '#121212' : color,
+            roughness: isAccent ? 0.4 : 0.65, // Accents (Windrose) are slightly smoother/more satin
+            metalness: isAccent ? 0.2 : 0.15, // Subtle metallic feel
+            envMapIntensity: 1.2,
+            flatShading: false,
+            side: THREE.DoubleSide,
+            vertexColors: false,
+        });
+    }, [isFixedBlack, isAccent, color]);
 
     useEffect(() => {
         clone.traverse((child) => {
-            // Apply single material to everything that can be rendered
             if (child.isMesh || child.isLine || child.isPoints || child.type.includes('Line') || child.type.includes('Points')) {
                 // 1. Security: Vertex jitter
                 if (!child.userData.isObfuscated && child.geometry) {
@@ -33,28 +48,17 @@ const Part = ({ url, color, renderOrder = 0, smoothNormals = false, isFixedBlack
                     child.userData.isObfuscated = true;
                 }
 
-                // 2. Smooth normals only for specified parts
+                // 2. Smooth normals
                 if (smoothNormals && child.isMesh && !child.userData.normalsSmoothed) {
                     child.geometry.computeVertexNormals();
                     child.userData.normalsSmoothed = true;
                 }
 
-                // 3. Robust Material Override
-                // For fixed black parts (holder body/base), we use a steady matte black
-                const finalColor = isFixedBlack ? '#1a1a1a' : color;
+                // 3. Material Assignment
+                child.material = premiumMaterial;
+                materialRef.current = premiumMaterial;
 
-                const material = new THREE.MeshStandardMaterial({
-                    color: finalColor,
-                    roughness: 0.85, // Matt/Seidenmatt
-                    metallic: 0.0,
-                    flatShading: false,
-                    side: THREE.DoubleSide,
-                    vertexColors: false,
-                });
-
-                child.material = material;
-
-                // 4. Clear any geometry groups or vertex colors
+                // 4. Geometry Cleanup
                 if (child.geometry) {
                     if (child.geometry.groups && child.geometry.groups.length > 0) {
                         child.geometry.clearGroups();
@@ -67,7 +71,16 @@ const Part = ({ url, color, renderOrder = 0, smoothNormals = false, isFixedBlack
                 child.renderOrder = renderOrder;
             }
         });
-    }, [clone, color, renderOrder, smoothNormals, isFixedBlack, url]);
+    }, [clone, premiumMaterial, renderOrder, smoothNormals]);
+
+    // Smooth Color Animation
+    useFrame((state, delta) => {
+        if (materialRef.current && !isFixedBlack) {
+            // Smoothly lerp to target color
+            currentColor.lerp(targetColor, delta * 4); // delta * 4 for smooth but snappy feel
+            materialRef.current.color.copy(currentColor);
+        }
+    });
 
     return <primitive object={clone} />;
 };
@@ -87,7 +100,7 @@ const ConfiguratorModel = () => {
     // Global Scale Obfuscation
     const scale = useMemo(() => getObfuscatedScale(), []);
 
-    // Auto-fit camera on initial load
+    // Hero Camera Positioning on initial load
     useFrame(() => {
         if (!hasFittedCamera.current && group.current) {
             const box = new THREE.Box3().setFromObject(group.current);
@@ -96,20 +109,23 @@ const ConfiguratorModel = () => {
 
             const maxDim = Math.max(size.x, size.y, size.z);
             const fov = camera.fov * (Math.PI / 180);
-            let cameraDistance = Math.abs(maxDim / Math.sin(fov / 2)) * 1.5;
+            // Slightly tighter distance for more presence
+            let cameraDistance = Math.abs(maxDim / Math.sin(fov / 2)) * 1.25;
 
+            // Product slightly elevated in frame
             camera.position.set(
-                center.x + cameraDistance * 0.5,
-                center.y + cameraDistance * 0.5,
-                center.z + cameraDistance
+                center.x + cameraDistance * 0.7,
+                center.y + cameraDistance * 0.4,
+                center.z + cameraDistance * 0.8
             );
 
             if (controls) {
-                controls.target.copy(center);
+                // Focus slightly above the bottom for better presence
+                controls.target.set(center.x, center.y - 0.2, center.z);
                 controls.update();
             }
 
-            camera.lookAt(center);
+            camera.lookAt(center.x, center.y - 0.2, center.z);
             camera.updateProjectionMatrix();
             hasFittedCamera.current = true;
         }
@@ -126,7 +142,7 @@ const ConfiguratorModel = () => {
                 */}
                 <Part url={ASSETS.bottleBase} color={patternColor} renderOrder={0} isFixedBlack={true} />
                 <Part url={ASSETS.bottleBody} color={patternColor} renderOrder={1} isFixedBlack={true} />
-                <Part url={ASSETS.bottleRose} color={patternColor} renderOrder={2} isFixedBlack={false} />
+                <Part url={ASSETS.bottleRose} color={patternColor} renderOrder={2} isFixedBlack={false} isAccent={true} />
             </group>
         );
     }
@@ -141,7 +157,7 @@ const ConfiguratorModel = () => {
             <Part url={ASSETS.arm} color={armColor} renderOrder={1} smoothNormals={true} />
             <Part url={ASSETS.insert} color={insertColor} renderOrder={2} />
             {pattern.enabled && (
-                <Part url={ASSETS.pattern} color={patternColor} renderOrder={3} />
+                <Part url={ASSETS.pattern} color={patternColor} renderOrder={3} isAccent={true} />
             )}
         </group>
     );

@@ -1,36 +1,40 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
 }
 
 .section h4 {
-    margin: 0 0 0.5rem 0;
-    font-size: 0.9rem;
-    color: #666;
+    margin: 0 0 1rem 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .palette {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.8rem;
 }
 
 .swatch {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    border: 2px solid transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     cursor: pointer;
     padding: 0;
-    transition: transform 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .swatch:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .active {
-    border-color: var(--color-black);
-    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--color-black);
+    border: 2px solid white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
 }

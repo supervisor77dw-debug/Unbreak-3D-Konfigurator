@@ -14,18 +14,18 @@ export const CONFIGURATION_DEFAULTS = {
         base: 'black',
         arm: 'black',
         module: 'black',
-        pattern: 'green',
+        pattern: 'red', // Premium default
     },
 };
 
 export const COLOR_PALETTE = {
-    mint: '#98ff98',
-    green: '#2ecc71',
-    purple: '#9b59b6',
-    iceBlue: '#a3d5fa',
-    darkBlue: '#34495e',
-    red: '#e74c3c',
-    black: '#2c3e50',
+    mint: '#a2d9ce',
+    green: '#145a32',
+    purple: '#4a235a',
+    iceBlue: '#5499c7',
+    darkBlue: '#1b2631',
+    red: '#b03a2e',
+    black: '#121212',
 };
 
 export const ConfiguratorProvider = ({ children }) => {
