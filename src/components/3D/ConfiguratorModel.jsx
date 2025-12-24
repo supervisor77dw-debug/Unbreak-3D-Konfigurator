@@ -239,12 +239,19 @@ const ConfiguratorModel = () => {
     // Global Scale Obfuscation
     const obfuscatedScale = useMemo(() => getObfuscatedScale(), []);
 
+    // MOBILE DETECTION: Reduce initial model size on mobile
+    const isMobile = useMemo(() => window.innerWidth <= 820, []);
+    const mobileScaleFactor = isMobile ? 0.6 : 1.0; // 40% reduction on mobile
+
     // ASSEMBLY LOGIC
     // LITERALLY SCALE DOWN BY FACTOR 10 per request: 0.1 * scale
     // obfuscatedScale is an array [x, y, z], multiply each component
+    // Additionally apply mobile scale factor for better mobile UX
     const finalScale = useMemo(() => {
-        return [obfuscatedScale[0] * 0.1, obfuscatedScale[1] * 0.1, obfuscatedScale[2] * 0.1];
-    }, [obfuscatedScale]);
+        const baseScale = 0.1;
+        const combinedScale = baseScale * mobileScaleFactor;
+        return [obfuscatedScale[0] * combinedScale, obfuscatedScale[1] * combinedScale, obfuscatedScale[2] * combinedScale];
+    }, [obfuscatedScale, mobileScaleFactor]);
 
     if (variant === 'bottle_holder') {
         return (
