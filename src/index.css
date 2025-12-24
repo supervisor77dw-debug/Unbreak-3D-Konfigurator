@@ -3,11 +3,13 @@
   line-height: 1.5;
   font-weight: 400;
 
-  /* UNBREAK1 Premium Palette */
+  /* UNBREAK ONE Premium Palette */
   --unbreak-black: #0a0a0a;
   --unbreak-graphite: #1a1a1a;
   --unbreak-deep-grey: #2a2a2a;
   --unbreak-silver: #a0a0a0;
+  --unbreak-cyan: #00d4ff;
+  --unbreak-cyan-dark: #00a8cc;
 
   /* UI Glassmorphism */
   --glass-bg: rgba(15, 15, 15, 0.7);

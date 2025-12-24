@@ -8,25 +8,19 @@ import styles from './Interface.module.css';
 const Interface = () => {
     const {
         variant, setVariant,
-        module,
-        pattern, togglePattern,
         colors
     } = useConfigurator();
 
     const handleAddToCart = () => {
-        // 7. ORDER / OUTPUT JSON Logic
+        // Updated Order Logic
         const output = {
+            product_name: 'UNBREAK ONE',
             product_variant: variant,
-            glass_mode: module,
             colors: {
                 baseplate: colors.base,
                 arm: colors.arm,
                 insert: colors.module,
-                pattern: pattern.enabled ? colors.pattern : null,
-            },
-            pattern: {
-                enabled: pattern.enabled,
-                type: pattern.type,
+                pattern: colors.pattern,
             },
             security: {
                 obfuscation_enabled: true
@@ -37,12 +31,18 @@ const Interface = () => {
         alert(`Zum Warenkorb hinzugefügt!\nKonfiguration in der Konsole anzeigen.`);
     };
 
+    const handleResetView = () => {
+        if (window.resetCameraView) {
+            window.resetCameraView();
+        }
+    };
+
     return (
         <div className={styles.interface}>
             <div className={styles.sidebar}>
                 <div className={styles.header}>
-                    <h1>UNBREAK1</h1>
-                    <p>Konfigurieren Sie Ihr Produkt</p>
+                    <h1>UNBREAK ONE</h1>
+                    <p>Produktkonfigurator</p>
                 </div>
 
                 <div className={styles.content}>
@@ -60,55 +60,32 @@ const Interface = () => {
                                 className={`${styles.tab} ${variant === 'bottle_holder' ? styles.activeTab : ''} `}
                                 onClick={() => setVariant('bottle_holder')}
                             >
-                                Flaschen + Glashalter
+                                Flaschenhalter
                             </button>
                         </div>
                     </div>
 
-                    {variant === 'bottle_holder' ? (
-                        <>
-                            {/* For Bottle Holder, only the Windrose Pattern is configurable */}
-                            <div className={styles.section}>
-                                <h3>Muster-Konfiguration</h3>
-                                <p className={styles.info}>
-                                    Der Flaschenhalter wird in edlem Matt-Schwarz geliefert.
-                                    Die integrierte Windrose kann farblich angepasst werden.
-                                </p>
-                            </div>
+                    <hr className={styles.divider} />
 
-                            <hr className={styles.divider} />
-
-                            <ColorPicker />
-                        </>
-                    ) : (
-                        <>
-                            <ModuleSelector />
-
-                            <hr className={styles.divider} />
-
-                            {/* Pattern Toggle */}
-                            <div className={styles.section}>
-                                <h3>Muster</h3>
-                                <label className={styles.toggle}>
-                                    <input
-                                        type="checkbox"
-                                        checked={pattern.enabled}
-                                        onChange={togglePattern}
-                                    />
-                                    <span className={styles.label}>
-                                        Windrose-Muster hinzufügen (+15€)
-                                    </span>
-                                </label>
-                            </div>
-
-                            <hr className={styles.divider} />
-
-                            <ColorPicker />
-                        </>
-                    )}
+                    <div className={styles.section}>
+                        <h3>Farbauswahl</h3>
+                        {variant === 'bottle_holder' && (
+                            <p className={styles.info}>
+                                Der Flaschenhalter wird in edlem Matt-Schwarz geliefert.
+                                Die integrierte Windrose kann farblich angepasst werden.
+                            </p>
+                        )}
+                        <ColorPicker />
+                    </div>
                 </div>
 
                 <div className={styles.footer}>
+                    <button
+                        className={styles.resetView}
+                        onClick={handleResetView}
+                    >
+                        🔄 Ansicht zurücksetzen
+                    </button>
                     <button
                         className={styles.addToCart}
                         onClick={handleAddToCart}

@@ -43,20 +43,18 @@ const ColorPicker = () => {
                         onSelect={(color) => updateColor('arm', color)}
                     />
                     <ColorSection
-                        title="Modul (Gummi-Aufsatz)"
+                        title="Gummilippe"
                         activeColor={colors.module}
                         onSelect={(color) => updateColor('module', color)}
                     />
                 </>
             )}
 
-            {(isBottleHolder || pattern.enabled) && (
-                <ColorSection
-                    title="Muster (Windrose)"
-                    activeColor={colors.pattern}
-                    onSelect={(color) => updateColor('pattern', color)}
-                />
-            )}
+            <ColorSection
+                title="Windrose"
+                activeColor={colors.pattern}
+                onSelect={(color) => updateColor('pattern', color)}
+            />
         </div>
     );
 };

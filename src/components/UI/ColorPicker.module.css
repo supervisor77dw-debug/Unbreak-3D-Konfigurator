@@ -34,7 +34,7 @@
 }
 
 .active {
-    border: 2px solid white;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    border: 2px solid var(--unbreak-cyan);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
     transform: scale(1.1);
 }

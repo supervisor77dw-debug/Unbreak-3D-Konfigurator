@@ -97,10 +97,10 @@
 }
 
 .activeTab {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.15);
-    color: white;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(0, 168, 204, 0.1));
+    border-color: rgba(0, 212, 255, 0.3);
+    color: var(--unbreak-cyan);
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.2);
     font-weight: 600;
 }
 
@@ -143,13 +143,40 @@
     padding: 2rem;
     background: rgba(0, 0, 0, 0.2);
     border-top: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.resetView {
+    width: 100%;
+    padding: 0.9rem;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.resetView:hover {
+    background: rgba(0, 212, 255, 0.08);
+    color: var(--unbreak-cyan);
+    border-color: rgba(0, 212, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.resetView:active {
+    transform: translateY(0);
 }
 
 .addToCart {
     width: 100%;
     padding: 1.2rem;
-    background: white;
-    color: black;
+    background: linear-gradient(135deg, var(--unbreak-cyan), var(--unbreak-cyan-dark));
+    color: var(--unbreak-black);
     border: none;
     border-radius: 12px;
     font-size: 1rem;
@@ -158,12 +185,13 @@
     letter-spacing: 1px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
 }
 
 .addToCart:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-    background: #f0f0f0;
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.5);
+    filter: brightness(1.1);
 }
 
 .addToCart:active:not(:disabled) {
