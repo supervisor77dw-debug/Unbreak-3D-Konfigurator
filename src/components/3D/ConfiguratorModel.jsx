@@ -22,8 +22,11 @@ const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
  * @param {number} duration - Animation duration in ms (default 500)
  * @param {boolean} isInitialLoad - Whether this is the first load (longer intro)
  */
-const fitCameraToObject = (camera, object, controls, margin = 1.2, animate = false, duration = 500, isInitialLoad = false) => {
-    if (!object || !camera || !controls) return;
+const fitCameraToObject = (camera, object, controls, margin = 1.2, animate = false, duration = 500, isInitialLoad = false, isMobile = false) => {
+    if (!object || !camera || !controls) return { distance: 0, center: new THREE.Vector3() };
+
+    // CRITICAL: Force world matrix update BEFORE bounds calculation
+    object.updateWorldMatrix(true, true);
 
     // Compute bounding box
     const box = new THREE.Box3().setFromObject(object);
@@ -35,24 +38,38 @@ const fitCameraToObject = (camera, object, controls, margin = 1.2, animate = fal
 
     // Calculate camera distance based on FOV and object size
     const fov = camera.fov * (Math.PI / 180); // Convert to radians
-    const distance = (radius * margin) / Math.tan(fov / 2);
+    let distance = (radius * margin) / Math.tan(fov / 2);
 
     // Position camera at a nice angle (45° elevation, slight rotation)
     const theta = Math.PI / 4; // 45° horizontal
     const phi = Math.PI / 4;   // 45° elevation
     
-    const targetX = center.x + distance * Math.sin(phi) * Math.cos(theta);
-    const targetY = center.y + distance * Math.cos(phi);
-    const targetZ = center.z + distance * Math.sin(phi) * Math.sin(theta);
+    let targetX = center.x + distance * Math.sin(phi) * Math.cos(theta);
+    let targetY = center.y + distance * Math.cos(phi);
+    let targetZ = center.z + distance * Math.sin(phi) * Math.sin(theta);
+
+    // HARD MOBILE FIX: Additional dolly-out for mobile (1.45x distance)
+    if (isMobile) {
+        const mobileDollyFactor = 1.45;
+        distance *= mobileDollyFactor;
+        targetX = center.x + distance * Math.sin(phi) * Math.cos(theta);
+        targetY = center.y + distance * Math.cos(phi);
+        targetZ = center.z + distance * Math.sin(phi) * Math.sin(theta);
+    }
 
     // Adjust near/far clipping planes
     camera.near = distance / 100;
     camera.far = distance * 10;
     camera.updateProjectionMatrix();
 
-    // Update controls limits
-    controls.minDistance = distance * 0.3;
-    controls.maxDistance = distance * 3;
+    // Update controls limits (mobile: wider range)
+    controls.minDistance = distance * (isMobile ? 0.6 : 0.3);
+    controls.maxDistance = distance * (isMobile ? 6.0 : 3.0);
+    
+    // Mobile: disable pan for simpler UX
+    if (isMobile && controls.enablePan !== undefined) {
+        controls.enablePan = false;
+    }
 
     if (animate) {
         // Store start position
@@ -100,9 +117,12 @@ const fitCameraToObject = (camera, object, controls, margin = 1.2, animate = fal
 
     // Debug logging (once)
     console.log('[FitCamera] Bbox size:', size);
-    console.log('[FitCamera] Radius:', radius.toFixed(3));
+    console.log('[FitCamera] Radius:', radius.toFixed(3), '| Margin:', margin, '| Mobile:', isMobile);
     console.log('[FitCamera] Distance:', distance.toFixed(3));
     console.log('[FitCamera] Center:', center);
+    console.log('[FitCamera] CamPos:', camera.position.toArray().map(v => v.toFixed(2)));
+    
+    return { distance, center };
 };
 
 // Asset paths - Using U1_* GLB files
@@ -190,16 +210,131 @@ const ConfiguratorModel = () => {
     const { camera, controls } = useThree();
     const hasFittedCamera = useRef(false);
     const hasNotifiedReady = useRef(false);
+    const hasAppliedInitialScale = useRef(false);
+    const lastFitVariant = useRef('');
+    const fitRunCount = useRef(0);
+
+    // Apply initial mobile scale ONCE on first load
+    useEffect(() => {
+        if (group.current && !hasAppliedInitialScale.current) {
+            const isMobile = window.matchMedia('(max-width: 820px)').matches;
+            const scaleFactor = isMobile ? 0.6 : 1.0;
+            const fitMargin = isMobile ? 1.6 : 1.15; // Mobile: mehr Abstand
+            
+            // Apply scale to the group (multiplied with existing scale)
+            const currentScale = group.current.scale.x; // Assume uniform scale
+            const newScale = currentScale * scaleFactor;
+            group.current.scale.setScalar(newScale);
+            group.current.updateMatrixWorld(true);
+            
+            hasAppliedInitialScale.current = true;
+            
+            // Store for global access
+            window.__u1_isMobile = isMobile;
+            window.__u1_fitMargin = fitMargin;
+            window.__u1_updateDebug = (dist, camDist) => {
+                const overlay = document.getElementById('u1-debug-overlay');
+                if (overlay) {
+                    overlay.innerHTML = `
+                        <strong>U1 DEBUG</strong><br>
+                        MOBILE: ${isMobile}<br>
+                        SCALE: ${scaleFactor.toFixed(2)}<br>
+                        FIT_MARGIN: ${fitMargin.toFixed(2)}<br>
+                        DIST: ${dist ? dist.toFixed(3) : 'N/A'}<br>
+                        CAM: ${camDist ? camDist.toFixed(3) : 'N/A'}<br>
+                        FIT_RUNS: ${window.__u1_fitRunCount || 0}<br>
+                        VIEWPORT: ${window.innerWidth}x${window.innerHeight}<br>
+                        BUILD: ${Date.now()}
+                    `;
+                }
+            };
+            
+            // Debug logging
+            console.log('[U1-Scale] isMobile:', isMobile, '| scaleFactor:', scaleFactor, '| fitMargin:', fitMargin, '| viewport:', window.innerWidth, 'x', window.innerHeight);
+            console.log('[U1-Scale] Applied to:', group.current.name || 'group', '| finalScale:', newScale);
+            
+            // Debug overlay (only if ?debug=1)
+            if (window.location.search.includes('debug=1')) {
+                const debugDiv = document.createElement('div');
+                debugDiv.id = 'u1-debug-overlay';
+                debugDiv.style.cssText = `
+                    position: fixed;
+                    top: 70px;
+                    left: 10px;
+                    background: rgba(0, 212, 255, 0.9);
+                    color: #000;
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    font-family: monospace;
+                    font-size: 11px;
+                    z-index: 9999;
+                    line-height: 1.4;
+                    pointer-events: none;
+                `;
+                debugDiv.innerHTML = `
+                    <strong>U1 DEBUG</strong><br>
+                    MOBILE: ${isMobile}<br>
+                    SCALE: ${scaleFactor.toFixed(2)}<br>
+                    FIT_MARGIN: ${fitMargin.toFixed(2)}<br>
+                    DIST: N/A<br>
+                    CAM: N/A<br>
+                    FIT_RUNS: 0<br>
+                    VIEWPORT: ${window.innerWidth}x${window.innerHeight}<br>
+                    BUILD: ${Date.now()}
+                `;
+                document.body.appendChild(debugDiv);
+            }
+        }
+    }, []);
 
     // Auto-fit camera when variant changes or on initial load
     useEffect(() => {
         if (group.current && camera && controls) {
-            // Small delay to ensure geometry is fully loaded
+            // Prevent double-fits: only fit if variant changed
+            if (lastFitVariant.current === variant && hasFittedCamera.current) {
+                console.log('[U1] FIT SKIPPED - variant unchanged:', variant);
+                return;
+            }
+            
+            // Small delay to ensure geometry is fully loaded AND scale is applied
             const timer = setTimeout(() => {
                 const isFirstLoad = !hasFittedCamera.current;
                 const duration = isFirstLoad ? 550 : 300; // 550ms intro, 300ms variant switch
-                fitCameraToObject(camera, group.current, controls, 1.3, true, duration, isFirstLoad);
+                
+                // Use mobile-aware fit margin (set in scale useEffect above)
+                const fitMargin = window.__u1_fitMargin || 1.15; // Fallback to desktop default
+                const isMobile = window.__u1_isMobile || false;
+                
+                // CRITICAL: Update world matrix before fit
+                group.current.updateWorldMatrix(true, true);
+                
+                // Increment fit counter
+                fitRunCount.current++;
+                window.__u1_fitRunCount = fitRunCount.current;
+                
+                const result = fitCameraToObject(camera, group.current, controls, fitMargin, true, duration, isFirstLoad, isMobile);
+                
+                // Update last fit variant
+                lastFitVariant.current = variant;
                 hasFittedCamera.current = true;
+                
+                // Calculate camera distance to center for debug
+                const camDist = camera.position.distanceTo(result.center);
+                
+                // Log fit run
+                console.log('[U1] FIT RUN', {
+                    variantKey: variant,
+                    isMobile,
+                    fitMargin,
+                    distance: result.distance.toFixed(3),
+                    camDist: camDist.toFixed(3),
+                    fitCount: fitRunCount.current
+                });
+                
+                // Update debug overlay
+                if (window.__u1_updateDebug) {
+                    window.__u1_updateDebug(result.distance, camDist);
+                }
 
                 // READY Signal: Send after first load + camera fit + 1 frame rendered
                 // This ensures the 3D model is fully loaded, positioned, and at least 1 frame is rendered
@@ -222,7 +357,24 @@ const ConfiguratorModel = () => {
     useEffect(() => {
         window.resetCameraView = () => {
             if (group.current && camera && controls) {
-                fitCameraToObject(camera, group.current, controls, 1.3, true, 400, false);
+                const fitMargin = window.__u1_fitMargin || 1.15;
+                const isMobile = window.__u1_isMobile || false;
+                
+                // Force reset: clear lastFitVariant to allow re-fit
+                lastFitVariant.current = '';
+                
+                group.current.updateWorldMatrix(true, true);
+                const result = fitCameraToObject(camera, group.current, controls, fitMargin, true, 400, false, isMobile);
+                
+                fitRunCount.current++;
+                window.__u1_fitRunCount = fitRunCount.current;
+                
+                const camDist = camera.position.distanceTo(result.center);
+                console.log('[U1] RESET VIEW', { fitMargin, distance: result.distance.toFixed(3), camDist: camDist.toFixed(3) });
+                
+                if (window.__u1_updateDebug) {
+                    window.__u1_updateDebug(result.distance, camDist);
+                }
             }
         };
         return () => {
@@ -239,19 +391,13 @@ const ConfiguratorModel = () => {
     // Global Scale Obfuscation
     const obfuscatedScale = useMemo(() => getObfuscatedScale(), []);
 
-    // MOBILE DETECTION: Reduce initial model size on mobile
-    const isMobile = useMemo(() => window.innerWidth <= 820, []);
-    const mobileScaleFactor = isMobile ? 0.6 : 1.0; // 40% reduction on mobile
-
     // ASSEMBLY LOGIC
-    // LITERALLY SCALE DOWN BY FACTOR 10 per request: 0.1 * scale
-    // obfuscatedScale is an array [x, y, z], multiply each component
-    // Additionally apply mobile scale factor for better mobile UX
+    // Base scale 0.1 (factor 10 reduction)
+    // Mobile scale is applied SEPARATELY in useEffect above (multiplied on top of this)
     const finalScale = useMemo(() => {
         const baseScale = 0.1;
-        const combinedScale = baseScale * mobileScaleFactor;
-        return [obfuscatedScale[0] * combinedScale, obfuscatedScale[1] * combinedScale, obfuscatedScale[2] * combinedScale];
-    }, [obfuscatedScale, mobileScaleFactor]);
+        return [obfuscatedScale[0] * baseScale, obfuscatedScale[1] * baseScale, obfuscatedScale[2] * baseScale];
+    }, [obfuscatedScale]);
 
     if (variant === 'bottle_holder') {
         return (
