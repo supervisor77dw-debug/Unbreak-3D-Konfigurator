@@ -22,7 +22,7 @@ const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
  * @param {number} duration - Animation duration in ms (default 500)
  * @param {boolean} isInitialLoad - Whether this is the first load (longer intro)
  */
-const fitCameraToObject = (camera, object, controls, margin = 1.2, animate = false, duration = 500, isInitialLoad = false, isMobile = false) => {
+const fitCameraToObject = (camera, object, controls, margin = 1.6, animate = false, duration = 500, isInitialLoad = false) => {
     if (!object || !camera || !controls) return { distance: 0, center: new THREE.Vector3() };
 
     // CRITICAL: Force world matrix update BEFORE bounds calculation
@@ -44,32 +44,23 @@ const fitCameraToObject = (camera, object, controls, margin = 1.2, animate = fal
     const theta = Math.PI / 4; // 45° horizontal
     const phi = Math.PI / 4;   // 45° elevation
     
+    // UNIFIED DOLLY-OUT: Apply 1.45x distance for ALL devices (not just mobile)
+    // This creates the perfect framing that was previously only on mobile
+    const dollyFactor = 1.45;
+    distance *= dollyFactor;
+    
     let targetX = center.x + distance * Math.sin(phi) * Math.cos(theta);
     let targetY = center.y + distance * Math.cos(phi);
     let targetZ = center.z + distance * Math.sin(phi) * Math.sin(theta);
-
-    // HARD MOBILE FIX: Additional dolly-out for mobile (1.45x distance)
-    if (isMobile) {
-        const mobileDollyFactor = 1.45;
-        distance *= mobileDollyFactor;
-        targetX = center.x + distance * Math.sin(phi) * Math.cos(theta);
-        targetY = center.y + distance * Math.cos(phi);
-        targetZ = center.z + distance * Math.sin(phi) * Math.sin(theta);
-    }
 
     // Adjust near/far clipping planes
     camera.near = distance / 100;
     camera.far = distance * 10;
     camera.updateProjectionMatrix();
 
-    // Update controls limits (mobile: wider range)
-    controls.minDistance = distance * (isMobile ? 0.6 : 0.3);
-    controls.maxDistance = distance * (isMobile ? 6.0 : 3.0);
-    
-    // Mobile: disable pan for simpler UX
-    if (isMobile && controls.enablePan !== undefined) {
-        controls.enablePan = false;
-    }
+    // Update controls limits (unified for all devices)
+    controls.minDistance = distance * 0.6;
+    controls.maxDistance = distance * 6.0;
 
     if (animate) {
         // Store start position
@@ -117,7 +108,7 @@ const fitCameraToObject = (camera, object, controls, margin = 1.2, animate = fal
 
     // Debug logging (once)
     console.log('[FitCamera] Bbox size:', size);
-    console.log('[FitCamera] Radius:', radius.toFixed(3), '| Margin:', margin, '| Mobile:', isMobile);
+    console.log('[FitCamera] Radius:', radius.toFixed(3), '| Margin:', margin, '| Dolly: 1.45x (unified)');
     console.log('[FitCamera] Distance:', distance.toFixed(3));
     console.log('[FitCamera] Center:', center);
     console.log('[FitCamera] CamPos:', camera.position.toArray().map(v => v.toFixed(2)));
@@ -215,9 +206,9 @@ const ConfiguratorModel = () => {
 
     // Initialize global settings (unified for all devices)
     useEffect(() => {
-        // Unified settings: NO device-specific logic
+        // UNIFIED: Same camera framing for ALL devices
         const isMobile = window.matchMedia('(max-width: 820px)').matches;
-        const fitMargin = isMobile ? 1.6 : 1.15; // Camera framing only
+        const fitMargin = 1.6; // UNIFIED: Always 1.6 (was mobile-only before)
         
         window.__u1_isMobile = isMobile;
         window.__u1_fitMargin = fitMargin;
@@ -226,9 +217,10 @@ const ConfiguratorModel = () => {
             if (overlay) {
                 overlay.innerHTML = `
                     <strong>U1 DEBUG</strong><br>
-                    MOBILE: ${isMobile}<br>
+                    DEVICE: ${isMobile ? 'MOBILE' : 'DESKTOP'}<br>
                     SCALE: 0.60 (unified)<br>
-                    FIT_MARGIN: ${fitMargin.toFixed(2)}<br>
+                    FIT_MARGIN: ${fitMargin.toFixed(2)} (unified)<br>
+                    DOLLY: 1.45x (unified)<br>
                     DIST: ${dist ? dist.toFixed(3) : 'N/A'}<br>
                     CAM: ${camDist ? camDist.toFixed(3) : 'N/A'}<br>
                     FIT_RUNS: ${window.__u1_fitRunCount || 0}<br>
@@ -257,9 +249,10 @@ const ConfiguratorModel = () => {
             `;
             debugDiv.innerHTML = `
                 <strong>U1 DEBUG</strong><br>
-                MOBILE: ${isMobile}<br>
+                DEVICE: ${isMobile ? 'MOBILE' : 'DESKTOP'}<br>
                 SCALE: 0.60 (unified)<br>
-                FIT_MARGIN: ${fitMargin.toFixed(2)}<br>
+                FIT_MARGIN: ${fitMargin.toFixed(2)} (unified)<br>
+                DOLLY: 1.45x (unified)<br>
                 DIST: N/A<br>
                 CAM: N/A<br>
                 FIT_RUNS: 0<br>
@@ -268,7 +261,7 @@ const ConfiguratorModel = () => {
             document.body.appendChild(debugDiv);
         }
         
-        console.log('[U1] Unified Scale: 0.6 for all devices | fitMargin:', fitMargin);
+        console.log('[U1] UNIFIED Framing: scale=0.6, fitMargin=1.6, dolly=1.45x for ALL devices');
     }, []);
 
     // Auto-fit camera when variant changes or on initial load
@@ -285,9 +278,8 @@ const ConfiguratorModel = () => {
                 const isFirstLoad = !hasFittedCamera.current;
                 const duration = isFirstLoad ? 550 : 300; // 550ms intro, 300ms variant switch
                 
-                // Use mobile-aware fit margin (set in scale useEffect above)
-                const fitMargin = window.__u1_fitMargin || 1.15; // Fallback to desktop default
-                const isMobile = window.__u1_isMobile || false;
+                // Use unified fit margin for all devices
+                const fitMargin = window.__u1_fitMargin || 1.6;
                 
                 // CRITICAL: Update world matrix before fit
                 group.current.updateWorldMatrix(true, true);
@@ -296,7 +288,7 @@ const ConfiguratorModel = () => {
                 fitRunCount.current++;
                 window.__u1_fitRunCount = fitRunCount.current;
                 
-                const result = fitCameraToObject(camera, group.current, controls, fitMargin, true, duration, isFirstLoad, isMobile);
+                const result = fitCameraToObject(camera, group.current, controls, fitMargin, true, duration, isFirstLoad);
                 
                 // Update last fit variant
                 lastFitVariant.current = variant;
@@ -308,8 +300,8 @@ const ConfiguratorModel = () => {
                 // Log fit run
                 console.log('[U1] FIT RUN', {
                     variantKey: variant,
-                    isMobile,
                     fitMargin,
+                    dolly: '1.45x (unified)',
                     distance: result.distance.toFixed(3),
                     camDist: camDist.toFixed(3),
                     fitCount: fitRunCount.current
@@ -341,20 +333,19 @@ const ConfiguratorModel = () => {
     useEffect(() => {
         window.resetCameraView = () => {
             if (group.current && camera && controls) {
-                const fitMargin = window.__u1_fitMargin || 1.15;
-                const isMobile = window.__u1_isMobile || false;
+                const fitMargin = window.__u1_fitMargin || 1.6;
                 
                 // Force reset: clear lastFitVariant to allow re-fit
                 lastFitVariant.current = '';
                 
                 group.current.updateWorldMatrix(true, true);
-                const result = fitCameraToObject(camera, group.current, controls, fitMargin, true, 400, false, isMobile);
+                const result = fitCameraToObject(camera, group.current, controls, fitMargin, true, 400, false);
                 
                 fitRunCount.current++;
                 window.__u1_fitRunCount = fitRunCount.current;
                 
                 const camDist = camera.position.distanceTo(result.center);
-                console.log('[U1] RESET VIEW', { fitMargin, distance: result.distance.toFixed(3), camDist: camDist.toFixed(3) });
+                console.log('[U1] RESET VIEW', { fitMargin, dolly: '1.45x', distance: result.distance.toFixed(3), camDist: camDist.toFixed(3) });
                 
                 if (window.__u1_updateDebug) {
                     window.__u1_updateDebug(result.distance, camDist);
