@@ -210,81 +210,65 @@ const ConfiguratorModel = () => {
     const { camera, controls } = useThree();
     const hasFittedCamera = useRef(false);
     const hasNotifiedReady = useRef(false);
-    const hasAppliedInitialScale = useRef(false);
     const lastFitVariant = useRef('');
     const fitRunCount = useRef(0);
 
-    // Apply initial mobile scale ONCE on first load
+    // Initialize global settings (unified for all devices)
     useEffect(() => {
-        if (group.current && !hasAppliedInitialScale.current) {
-            const isMobile = window.matchMedia('(max-width: 820px)').matches;
-            const scaleFactor = isMobile ? 0.6 : 1.0;
-            const fitMargin = isMobile ? 1.6 : 1.15; // Mobile: mehr Abstand
-            
-            // Apply scale to the group (multiplied with existing scale)
-            const currentScale = group.current.scale.x; // Assume uniform scale
-            const newScale = currentScale * scaleFactor;
-            group.current.scale.setScalar(newScale);
-            group.current.updateMatrixWorld(true);
-            
-            hasAppliedInitialScale.current = true;
-            
-            // Store for global access
-            window.__u1_isMobile = isMobile;
-            window.__u1_fitMargin = fitMargin;
-            window.__u1_updateDebug = (dist, camDist) => {
-                const overlay = document.getElementById('u1-debug-overlay');
-                if (overlay) {
-                    overlay.innerHTML = `
-                        <strong>U1 DEBUG</strong><br>
-                        MOBILE: ${isMobile}<br>
-                        SCALE: ${scaleFactor.toFixed(2)}<br>
-                        FIT_MARGIN: ${fitMargin.toFixed(2)}<br>
-                        DIST: ${dist ? dist.toFixed(3) : 'N/A'}<br>
-                        CAM: ${camDist ? camDist.toFixed(3) : 'N/A'}<br>
-                        FIT_RUNS: ${window.__u1_fitRunCount || 0}<br>
-                        VIEWPORT: ${window.innerWidth}x${window.innerHeight}<br>
-                        BUILD: ${Date.now()}
-                    `;
-                }
-            };
-            
-            // Debug logging
-            console.log('[U1-Scale] isMobile:', isMobile, '| scaleFactor:', scaleFactor, '| fitMargin:', fitMargin, '| viewport:', window.innerWidth, 'x', window.innerHeight);
-            console.log('[U1-Scale] Applied to:', group.current.name || 'group', '| finalScale:', newScale);
-            
-            // Debug overlay (only if ?debug=1)
-            if (window.location.search.includes('debug=1')) {
-                const debugDiv = document.createElement('div');
-                debugDiv.id = 'u1-debug-overlay';
-                debugDiv.style.cssText = `
-                    position: fixed;
-                    top: 70px;
-                    left: 10px;
-                    background: rgba(0, 212, 255, 0.9);
-                    color: #000;
-                    padding: 8px 12px;
-                    border-radius: 8px;
-                    font-family: monospace;
-                    font-size: 11px;
-                    z-index: 9999;
-                    line-height: 1.4;
-                    pointer-events: none;
-                `;
-                debugDiv.innerHTML = `
+        // Unified settings: NO device-specific logic
+        const isMobile = window.matchMedia('(max-width: 820px)').matches;
+        const fitMargin = isMobile ? 1.6 : 1.15; // Camera framing only
+        
+        window.__u1_isMobile = isMobile;
+        window.__u1_fitMargin = fitMargin;
+        window.__u1_updateDebug = (dist, camDist) => {
+            const overlay = document.getElementById('u1-debug-overlay');
+            if (overlay) {
+                overlay.innerHTML = `
                     <strong>U1 DEBUG</strong><br>
                     MOBILE: ${isMobile}<br>
-                    SCALE: ${scaleFactor.toFixed(2)}<br>
+                    SCALE: 0.60 (unified)<br>
                     FIT_MARGIN: ${fitMargin.toFixed(2)}<br>
-                    DIST: N/A<br>
-                    CAM: N/A<br>
-                    FIT_RUNS: 0<br>
-                    VIEWPORT: ${window.innerWidth}x${window.innerHeight}<br>
-                    BUILD: ${Date.now()}
+                    DIST: ${dist ? dist.toFixed(3) : 'N/A'}<br>
+                    CAM: ${camDist ? camDist.toFixed(3) : 'N/A'}<br>
+                    FIT_RUNS: ${window.__u1_fitRunCount || 0}<br>
+                    VIEWPORT: ${window.innerWidth}x${window.innerHeight}
                 `;
-                document.body.appendChild(debugDiv);
             }
+        };
+        
+        // Debug overlay (only if ?debug=1)
+        if (window.location.search.includes('debug=1')) {
+            const debugDiv = document.createElement('div');
+            debugDiv.id = 'u1-debug-overlay';
+            debugDiv.style.cssText = `
+                position: fixed;
+                top: 70px;
+                left: 10px;
+                background: rgba(0, 212, 255, 0.9);
+                color: #000;
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-family: monospace;
+                font-size: 11px;
+                z-index: 9999;
+                line-height: 1.4;
+                pointer-events: none;
+            `;
+            debugDiv.innerHTML = `
+                <strong>U1 DEBUG</strong><br>
+                MOBILE: ${isMobile}<br>
+                SCALE: 0.60 (unified)<br>
+                FIT_MARGIN: ${fitMargin.toFixed(2)}<br>
+                DIST: N/A<br>
+                CAM: N/A<br>
+                FIT_RUNS: 0<br>
+                VIEWPORT: ${window.innerWidth}x${window.innerHeight}
+            `;
+            document.body.appendChild(debugDiv);
         }
+        
+        console.log('[U1] Unified Scale: 0.6 for all devices | fitMargin:', fitMargin);
     }, []);
 
     // Auto-fit camera when variant changes or on initial load
@@ -392,10 +376,10 @@ const ConfiguratorModel = () => {
     const obfuscatedScale = useMemo(() => getObfuscatedScale(), []);
 
     // ASSEMBLY LOGIC
-    // Base scale 0.07 (30% kleiner für besseres Framing, device-unabhängig)
-    // Mobile scale 0.6 wird SEPARAT in useEffect angewendet (multiplied on top of this)
+    // UNIFIED SCALE: 0.06 (60% = 0.6) für ALLE Devices (Desktop + Mobile)
+    // Keine device-spezifische Skalierung mehr!
     const finalScale = useMemo(() => {
-        const baseScale = 0.07; // Reduziert von 0.1 auf 0.07 = -30%
+        const baseScale = 0.06; // 0.1 (ursprünglich) × 0.6 = 0.06 = 60%
         return [obfuscatedScale[0] * baseScale, obfuscatedScale[1] * baseScale, obfuscatedScale[2] * baseScale];
     }, [obfuscatedScale]);
 
