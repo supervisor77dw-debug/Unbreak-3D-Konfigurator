@@ -261,7 +261,8 @@ const ConfiguratorModel = () => {
             document.body.appendChild(debugDiv);
         }
         
-        console.log('[U1] UNIFIED Framing: scale=0.6, fitMargin=1.6, dolly=1.45x for ALL devices');
+        console.log('[U1] ✅ UNIFIED FRAMING v2: scale=0.6, fitMargin=1.6, dolly=1.45x for ALL devices');
+        console.log('[U1] Build timestamp:', Date.now(), '- If you see old values, clear browser cache!');
     }, []);
 
     // Auto-fit camera when variant changes or on initial load
