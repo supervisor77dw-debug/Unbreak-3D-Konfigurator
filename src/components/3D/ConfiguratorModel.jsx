@@ -392,10 +392,10 @@ const ConfiguratorModel = () => {
     const obfuscatedScale = useMemo(() => getObfuscatedScale(), []);
 
     // ASSEMBLY LOGIC
-    // Base scale 0.1 (factor 10 reduction)
-    // Mobile scale is applied SEPARATELY in useEffect above (multiplied on top of this)
+    // Base scale 0.07 (30% kleiner für besseres Framing, device-unabhängig)
+    // Mobile scale 0.6 wird SEPARAT in useEffect angewendet (multiplied on top of this)
     const finalScale = useMemo(() => {
-        const baseScale = 0.1;
+        const baseScale = 0.07; // Reduziert von 0.1 auf 0.07 = -30%
         return [obfuscatedScale[0] * baseScale, obfuscatedScale[1] * baseScale, obfuscatedScale[2] * baseScale];
     }, [obfuscatedScale]);
 
