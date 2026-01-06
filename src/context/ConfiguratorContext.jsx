@@ -36,6 +36,54 @@ const PRODUCT_SKU_MAP = {
     bottle_holder: 'UNBREAK-FLASCHE-01',
 };
 
+/**
+ * Build configuration payload from explicit next-state values
+ * Prevents stale closure bugs by NOT relying on useState closures
+ * @param {object} params - { nextVariant, nextColors, nextFinish, nextQty }
+ * @returns {object} Complete config payload
+ */
+const buildConfig = ({ nextVariant, nextColors, nextFinish, nextQty }) => {
+    const isBottleHolder = nextVariant === 'bottle_holder';
+    
+    // Build colors object based on product type
+    const colorsObj = isBottleHolder
+        ? {
+            // BOTTLE HOLDER: Only base (Unterteil) and pattern (Oberteil/Farbakzent)
+            base: 'black',             // Unterteil (fixed black in 3D model)
+            pattern: nextColors.pattern,   // Oberteil/Farbakzent (konfigurierbar)
+          }
+        : {
+            // GLASS HOLDER: ALL 4 PARTS (REQUIRED)
+            base: nextColors.base,         // Grundplatte
+            arm: nextColors.arm,           // Arm
+            module: nextColors.module,     // Gummilippe/Modul
+            pattern: nextColors.pattern,   // Windrose/Pattern
+          };
+    
+    // Build parts metadata
+    const partsMetadata = isBottleHolder
+        ? [
+            { key: 'base', label_de: 'Unterteil', editable: false },
+            { key: 'pattern', label_de: 'Oberteil/Farbakzent', editable: true },
+          ]
+        : [
+            { key: 'base', label_de: 'Grundplatte', editable: true },
+            { key: 'arm', label_de: 'Arm', editable: true },
+            { key: 'module', label_de: 'Gummilippe', editable: true },
+            { key: 'pattern', label_de: 'Windrose', editable: true },
+          ];
+    
+    return {
+        variant: nextVariant,
+        product_sku: PRODUCT_SKU_MAP[nextVariant] || 'UNBREAK-UNKNOWN',
+        colors: colorsObj,
+        parts: partsMetadata,
+        finish: nextFinish,
+        quantity: nextQty,
+        config_version: '1.0.0',
+    };
+};
+
 export const ConfiguratorProvider = ({ children }) => {
     const [variant, setVariant] = useState(CONFIGURATION_DEFAULTS.variant);
     const [pattern, setPattern] = useState(CONFIGURATION_DEFAULTS.pattern);
@@ -44,149 +92,99 @@ export const ConfiguratorProvider = ({ children }) => {
     const [quantity, setQuantity] = useState(CONFIGURATION_DEFAULTS.quantity);
 
     /**
-     * Get current configuration in parent-expected format
-     * Product-aware mapping:
-     * - glass_holder: { base, arm, module, pattern } (4 parts REQUIRED)
-     * - bottle_holder: { base, pattern } (only 2 parts)
+     * Get current configuration (for GET_CONFIGURATION handler)
+     * Uses current state values - should be consistent with buildConfig
      */
     const getCurrentConfig = useCallback(() => {
-        const isBottleHolder = variant === 'bottle_holder';
-        
-        // Build colors object based on product type
-        const colorConfig = isBottleHolder 
-            ? {
-                // BOTTLE HOLDER: Only base (Unterteil) and pattern (Oberteil/Farbakzent)
-                base: 'black',             // Unterteil (fixed black in 3D model)
-                pattern: colors.pattern,   // Oberteil/Farbakzent (konfigurierbar)
-              }
-            : {
-                // GLASS HOLDER: ALL 4 PARTS (REQUIRED)
-                base: colors.base,         // Grundplatte
-                arm: colors.arm,           // Arm
-                module: colors.module,     // Gummilippe/Modul
-                pattern: colors.pattern,   // Windrose/Pattern
-              };
-        
-        // Build parts metadata
-        const partsMetadata = isBottleHolder
-            ? [
-                { key: 'base', label_de: 'Unterteil', editable: false },
-                { key: 'pattern', label_de: 'Oberteil/Farbakzent', editable: true },
-              ]
-            : [
-                { key: 'base', label_de: 'Grundplatte', editable: true },
-                { key: 'arm', label_de: 'Arm', editable: true },
-                { key: 'module', label_de: 'Gummilippe', editable: true },
-                { key: 'pattern', label_de: 'Windrose', editable: true },
-              ];
-        
-        return {
-            variant: variant,
-            product_sku: PRODUCT_SKU_MAP[variant] || 'UNBREAK-UNKNOWN',
-            colors: colorConfig,
-            parts: partsMetadata,
-            finish: finish,
-            quantity: quantity,
-            config_version: '1.0.0',
-        };
+        return buildConfig({
+            nextVariant: variant,
+            nextColors: colors,
+            nextFinish: finish,
+            nextQty: quantity,
+        });
     }, [colors, finish, quantity, variant]);
 
     /**
      * Update color and broadcast change to parent
+     * NO setTimeout - uses explicit next state to prevent stale closures
      */
     const updateColor = useCallback((part, colorName) => {
-        setColors((prev) => {
-            const newColors = {
-                ...prev,
-                [part]: colorName,
-            };
-            
-            // Broadcast immediately after state update (next tick)
-            setTimeout(() => {
-                const config = getCurrentConfig();
-                // Update with new color
-                if (variant === 'bottle_holder' && part === 'pattern') {
-                    config.colors.pattern = colorName;
-                } else if (variant === 'glass_holder') {
-                    config.colors.base = newColors.base;
-                    config.colors.arm = newColors.arm;
-                    config.colors.module = newColors.module;
-                    config.colors.pattern = newColors.pattern;
-                }
-                
-                broadcastConfig(config, `color_changed:${part}=${colorName}`);
-            }, 0);
-            
-            return newColors;
+        // Compute next colors state
+        const nextColors = {
+            ...colors,
+            [part]: colorName,
+        };
+        
+        // Update state
+        setColors(nextColors);
+        
+        // Build and broadcast config with NEXT values (no stale closure)
+        const config = buildConfig({
+            nextVariant: variant,
+            nextColors: nextColors,
+            nextFinish: finish,
+            nextQty: quantity,
         });
-    }, [finish, quantity, variant, getCurrentConfig]);
+        
+        broadcastConfig(config, `color_changed:${part}=${colorName}`);
+    }, [colors, finish, quantity, variant]);
 
     /**
      * Update variant and broadcast change to parent
+     * NO setTimeout - uses explicit next state
      */
     const updateVariant = useCallback((newVariant) => {
+        // Update state
         setVariant(newVariant);
         
-        // Broadcast immediately after state update
-        setTimeout(() => {
-            const config = getCurrentConfig();
-            config.variant = newVariant;
-            config.product_sku = PRODUCT_SKU_MAP[newVariant] || 'UNBREAK-UNKNOWN';
-            
-            // Update colors based on new variant
-            if (newVariant === 'bottle_holder') {
-                config.colors = {
-                    base: 'black',
-                    pattern: colors.pattern,
-                };
-                config.parts = [
-                    { key: 'base', label_de: 'Unterteil', editable: false },
-                    { key: 'pattern', label_de: 'Oberteil/Farbakzent', editable: true },
-                ];
-            } else {
-                config.colors = {
-                    base: colors.base,
-                    arm: colors.arm,
-                    module: colors.module,
-                    pattern: colors.pattern,
-                };
-                config.parts = [
-                    { key: 'base', label_de: 'Grundplatte', editable: true },
-                    { key: 'arm', label_de: 'Arm', editable: true },
-                    { key: 'module', label_de: 'Gummilippe', editable: true },
-                    { key: 'pattern', label_de: 'Windrose', editable: true },
-                ];
-            }
-            
-            broadcastConfig(config, `variant_changed:${newVariant}`);
-        }, 0);
-    }, [colors, finish, quantity, getCurrentConfig]);
+        // Build and broadcast config with NEXT variant
+        const config = buildConfig({
+            nextVariant: newVariant,
+            nextColors: colors,
+            nextFinish: finish,
+            nextQty: quantity,
+        });
+        
+        broadcastConfig(config, `variant_changed:${newVariant}`);
+    }, [colors, finish, quantity]);
 
     /**
      * Update finish and broadcast change to parent
+     * NO setTimeout - uses explicit next state
      */
     const updateFinish = useCallback((newFinish) => {
+        // Update state
         setFinish(newFinish);
         
-        setTimeout(() => {
-            const config = getCurrentConfig();
-            config.finish = newFinish;
-            broadcastConfig(config, `finish_changed:${newFinish}`);
-        }, 0);
-    }, [getCurrentConfig]);
+        // Build and broadcast config with NEXT finish
+        const config = buildConfig({
+            nextVariant: variant,
+            nextColors: colors,
+            nextFinish: newFinish,
+            nextQty: quantity,
+        });
+        
+        broadcastConfig(config, `finish_changed:${newFinish}`);
+    }, [colors, quantity, variant]);
 
     /**
      * Update quantity and broadcast change to parent
+     * NO setTimeout - uses explicit next state
      */
     const updateQuantity = useCallback((newQuantity) => {
+        // Update state
         setQuantity(newQuantity);
         
-        setTimeout(() => {
-            const config = getCurrentConfig();
-            config.quantity = newQuantity;
-            broadcastConfig(config, `quantity_changed:${newQuantity}`);
-        }, 0);
-    }, [getCurrentConfig]);
+        // Build and broadcast config with NEXT quantity
+        const config = buildConfig({
+            nextVariant: variant,
+            nextColors: colors,
+            nextFinish: finish,
+            nextQty: newQuantity,
+        });
+        
+        broadcastConfig(config, `quantity_changed:${newQuantity}`);
+    }, [colors, finish, variant]);
 
     // Initialize GET_CONFIGURATION listener on mount
     useEffect(() => {
@@ -195,6 +193,19 @@ export const ConfiguratorProvider = ({ children }) => {
         
         return cleanup;
     }, [getCurrentConfig]);
+
+    // Broadcast initial configuration on mount
+    useEffect(() => {
+        const initialConfig = buildConfig({
+            nextVariant: variant,
+            nextColors: colors,
+            nextFinish: finish,
+            nextQty: quantity,
+        });
+        
+        broadcastConfig(initialConfig, 'initial_config');
+        console.info('[ConfiguratorContext] Initial config broadcasted to parent');
+    }, []); // Only run once on mount
 
     return (
         <ConfiguratorContext.Provider
