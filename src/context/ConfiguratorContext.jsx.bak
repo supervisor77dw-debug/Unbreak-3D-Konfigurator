@@ -42,6 +42,8 @@ export const ConfiguratorProvider = ({ children }) => {
     const [colors, setColors] = useState(CONFIGURATION_DEFAULTS.colors);
     const [finish, setFinish] = useState(CONFIGURATION_DEFAULTS.finish);
     const [quantity, setQuantity] = useState(CONFIGURATION_DEFAULTS.quantity);
+    const [previewImageUrl, setPreviewImageUrl] = useState(null);
+    const [engraving, setEngraving] = useState(null);
 
     /**
      * Get current configuration in parent-expected format
@@ -81,15 +83,16 @@ export const ConfiguratorProvider = ({ children }) => {
               ];
         
         return {
-            variant: variant,
+            product: variant,
             product_sku: PRODUCT_SKU_MAP[variant] || 'UNBREAK-UNKNOWN',
             colors: colorConfig,
             parts: partsMetadata,
             finish: finish,
             quantity: quantity,
-            config_version: '1.0.0',
+            preview_image_url: previewImageUrl,
+            engraving: engraving,
         };
-    }, [colors, finish, quantity, variant]);
+    }, [colors, finish, quantity, variant, previewImageUrl, engraving]);
 
     /**
      * Update color and broadcast change to parent
@@ -102,24 +105,84 @@ export const ConfiguratorProvider = ({ children }) => {
             };
             
             // Broadcast immediately after state update (next tick)
+            // Use getCurrentConfig to ensure correct product-aware format
             setTimeout(() => {
-                const config = getCurrentConfig();
-                // Update with new color
-                if (variant === 'bottle_holder' && part === 'pattern') {
-                    config.colors.pattern = colorName;
-                } else if (variant === 'glass_holder') {
-                    config.colors.base = newColors.base;
-                    config.colors.arm = newColors.arm;
-                    config.colors.module = newColors.module;
-                    config.colors.pattern = newColors.pattern;
-                }
+                const isBottleHolder = variant === 'bottle_holder';
+                
+                const colorConfig = isBottleHolder 
+                    ? {
+                        base: 'black',
+                        pattern: newColors.pattern,
+                      }
+                    : {
+                        base: newColors.base,
+                        arm: newColors.arm,
+                        module: newColors.module,
+                        pattern: newColors.pattern,
+                      };
+                
+                const partsMetadata = isBottleHolder
+                    ? [
+                        { key: 'base', label_de: 'Unterteil', editable: false },
+                        { key: 'pattern', label_de: 'Oberteil/Farbakzent', editable: true },
+                      ]
+                    : [
+                        { key: 'base', label_de: 'Grundplatte', editable: true },
+                        { key: 'arm', label_de: 'Arm', editable: true },
+                        { key: 'module', label_de: 'Gummilippe', editable: true },
+                        { key: 'pattern', label_de: 'Windrose', editable: true },
+                      ];
+                
+                const config = { with correct product-aware format
+        setTimeout(() => {
+            const isBottleHolder = newVariant === 'bottle_holder';
+            
+            const colorConfig = isBottleHolder 
+                ? {
+                    base: 'black',
+                    top: colors.pattern,
+                  }
+                : {
+                    base: colors.base,
+                    middle: colors.arm,
+                    top: colors.pattern,
+                  };
+            
+            const partsMetadata = isBottleHolder
+                ? [
+                    { key: 'base', label_de: 'Unterteil', editable: false },
+                    { key: 'top', label_de: 'Oberteil/Farbakzent', editable: true },
+                  ]
+                : [
+                    { key: 'base', label_de: 'Grundplatte', editable: true },
+                    { key: 'middle', label_de: 'Arm', editable: true },
+                    { key: 'top', label_de: 'Windrose', editable: true },
+                    { key: 'lip', label_de: 'Gummilippe', editable: true, internal_only: true },
+                  ];
+            
+            const config = {
+                product: newVariant,
+                product_sku: PRODUCT_SKU_MAP[newVariant] || 'UNBREAK-UNKNOWN',
+                colors: colorConfig,
+                parts: partsMetadata,
+                finish: finish,
+                quantity: quantity,
+                preview_image_url: previewImageUrl,
+                engraving: engraving,
+            };
+            
+            broadcastConfig(config, `variant_changed:${newVariant}`);
+        }, 0);
+    }, [colors, finish, quantity, previewImageUrl, engravinview_image_url: previewImageUrl,
+                    engraving: engraving,
+                };
                 
                 broadcastConfig(config, `color_changed:${part}=${colorName}`);
             }, 0);
             
             return newColors;
         });
-    }, [finish, quantity, variant, getCurrentConfig]);
+    }, [finish, quantity, variant, previewImageUrl, engraving]);
 
     /**
      * Update variant and broadcast change to parent
@@ -130,37 +193,11 @@ export const ConfiguratorProvider = ({ children }) => {
         // Broadcast immediately after state update
         setTimeout(() => {
             const config = getCurrentConfig();
-            config.variant = newVariant;
+            config.product = newVariant;
             config.product_sku = PRODUCT_SKU_MAP[newVariant] || 'UNBREAK-UNKNOWN';
-            
-            // Update colors based on new variant
-            if (newVariant === 'bottle_holder') {
-                config.colors = {
-                    base: 'black',
-                    pattern: colors.pattern,
-                };
-                config.parts = [
-                    { key: 'base', label_de: 'Unterteil', editable: false },
-                    { key: 'pattern', label_de: 'Oberteil/Farbakzent', editable: true },
-                ];
-            } else {
-                config.colors = {
-                    base: colors.base,
-                    arm: colors.arm,
-                    module: colors.module,
-                    pattern: colors.pattern,
-                };
-                config.parts = [
-                    { key: 'base', label_de: 'Grundplatte', editable: true },
-                    { key: 'arm', label_de: 'Arm', editable: true },
-                    { key: 'module', label_de: 'Gummilippe', editable: true },
-                    { key: 'pattern', label_de: 'Windrose', editable: true },
-                ];
-            }
-            
             broadcastConfig(config, `variant_changed:${newVariant}`);
         }, 0);
-    }, [colors, finish, quantity, getCurrentConfig]);
+    }, [getCurrentConfig]);
 
     /**
      * Update finish and broadcast change to parent
@@ -208,6 +245,10 @@ export const ConfiguratorProvider = ({ children }) => {
                 setFinish: updateFinish,
                 quantity,
                 setQuantity: updateQuantity,
+                previewImageUrl,
+                setPreviewImageUrl,
+                engraving,
+                setEngraving,
                 palette: COLOR_PALETTE,
                 getCurrentConfig,
             }}

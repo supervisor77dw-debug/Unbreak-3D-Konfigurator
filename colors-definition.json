@@ -1,0 +1,198 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-04",
+  "source": "UNBREAK ONE 3D Configurator",
+  "totalColors": 7,
+  "colors": [
+    {
+      "internalId": "mint",
+      "internalName": "mint",
+      "displayName": "Mint",
+      "hex": "#a2d9ce",
+      "rgb": {
+        "r": 162,
+        "g": 217,
+        "b": 206
+      },
+      "availableFor": {
+        "glass_holder": ["base", "arm", "module", "pattern"],
+        "bottle_holder": ["pattern"]
+      },
+      "isDefault": false,
+      "source": {
+        "file": "src/context/ConfiguratorContext.jsx",
+        "line": 23
+      }
+    },
+    {
+      "internalId": "green",
+      "internalName": "green",
+      "displayName": "Green",
+      "hex": "#145a32",
+      "rgb": {
+        "r": 20,
+        "g": 90,
+        "b": 50
+      },
+      "availableFor": {
+        "glass_holder": ["base", "arm", "module", "pattern"],
+        "bottle_holder": ["pattern"]
+      },
+      "isDefault": false,
+      "source": {
+        "file": "src/context/ConfiguratorContext.jsx",
+        "line": 24
+      }
+    },
+    {
+      "internalId": "purple",
+      "internalName": "purple",
+      "displayName": "Purple",
+      "hex": "#4a235a",
+      "rgb": {
+        "r": 74,
+        "g": 35,
+        "b": 90
+      },
+      "availableFor": {
+        "glass_holder": ["base", "arm", "module", "pattern"],
+        "bottle_holder": ["pattern"]
+      },
+      "isDefault": false,
+      "source": {
+        "file": "src/context/ConfiguratorContext.jsx",
+        "line": 25
+      }
+    },
+    {
+      "internalId": "iceBlue",
+      "internalName": "iceBlue",
+      "displayName": "Ice Blue",
+      "hex": "#5499c7",
+      "rgb": {
+        "r": 84,
+        "g": 153,
+        "b": 199
+      },
+      "availableFor": {
+        "glass_holder": ["base", "arm", "module", "pattern"],
+        "bottle_holder": ["pattern"]
+      },
+      "isDefault": false,
+      "source": {
+        "file": "src/context/ConfiguratorContext.jsx",
+        "line": 26
+      },
+      "notes": "CamelCase ID - nicht ice_blue oder IceBlue"
+    },
+    {
+      "internalId": "darkBlue",
+      "internalName": "darkBlue",
+      "displayName": "Dark Blue",
+      "hex": "#1b2631",
+      "rgb": {
+        "r": 27,
+        "g": 38,
+        "b": 49
+      },
+      "availableFor": {
+        "glass_holder": ["base", "arm", "module", "pattern"],
+        "bottle_holder": ["pattern"]
+      },
+      "isDefault": false,
+      "source": {
+        "file": "src/context/ConfiguratorContext.jsx",
+        "line": 27
+      },
+      "notes": "CamelCase ID - nicht dark_blue oder DarkBlue"
+    },
+    {
+      "internalId": "red",
+      "internalName": "red",
+      "displayName": "Red",
+      "hex": "#b03a2e",
+      "rgb": {
+        "r": 176,
+        "g": 58,
+        "b": 46
+      },
+      "availableFor": {
+        "glass_holder": ["base", "arm", "module", "pattern"],
+        "bottle_holder": ["pattern"]
+      },
+      "isDefault": true,
+      "defaultFor": ["pattern"],
+      "source": {
+        "file": "src/context/ConfiguratorContext.jsx",
+        "line": 28
+      },
+      "notes": "Premium default für Windrose/Pattern"
+    },
+    {
+      "internalId": "black",
+      "internalName": "black",
+      "displayName": "Black",
+      "hex": "#121212",
+      "rgb": {
+        "r": 18,
+        "g": 18,
+        "b": 18
+      },
+      "availableFor": {
+        "glass_holder": ["base", "arm", "module", "pattern"],
+        "bottle_holder": ["pattern"]
+      },
+      "isDefault": true,
+      "defaultFor": ["base", "arm", "module"],
+      "source": {
+        "file": "src/context/ConfiguratorContext.jsx",
+        "line": 29
+      },
+      "notes": "Häufigste Default-Farbe (3 von 4 Bauteilen)"
+    }
+  ],
+  "defaults": {
+    "glass_holder": {
+      "base": "black",
+      "arm": "black",
+      "module": "black",
+      "pattern": "red"
+    },
+    "bottle_holder": {
+      "pattern": "red"
+    }
+  },
+  "bauteilMapping": {
+    "base": {
+      "displayName": "Grundplatte",
+      "gltfFile": "U1_Baseplate.glb",
+      "variable": "colors.base",
+      "parentKey": "base"
+    },
+    "arm": {
+      "displayName": "Arm",
+      "gltfFile": "U1_Arm.glb",
+      "variable": "colors.arm",
+      "parentKey": "middle"
+    },
+    "module": {
+      "displayName": "Gummilippe",
+      "gltfFile": "U1_Insert_Rubber.glb",
+      "variable": "colors.module",
+      "parentKey": null,
+      "notes": "Wird NICHT an Parent gesendet"
+    },
+    "pattern": {
+      "displayName": "Windrose",
+      "gltfFile": "U1_Pattern_Windrose.glb",
+      "variable": "colors.pattern",
+      "parentKey": "top"
+    }
+  },
+  "validation": {
+    "totalColors": 7,
+    "colorIds": ["mint", "green", "purple", "iceBlue", "darkBlue", "red", "black"],
+    "allHexValid": true,
+    "camelCaseColors": ["iceBlue", "darkBlue"]
+  }
+}

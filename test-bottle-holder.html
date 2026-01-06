@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNBREAK ONE - Bottle Holder Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            background: #1a1a2e;
+            color: white;
+            padding: 20px 30px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 500px;
+            gap: 0;
+        }
+        
+        .iframe-wrapper {
+            background: #f5f5f5;
+            position: relative;
+            min-height: 700px;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 700px;
+            border: none;
+            display: block;
+        }
+        
+        .sidebar {
+            background: #fafafa;
+            padding: 30px;
+            border-left: 1px solid #e0e0e0;
+            overflow-y: auto;
+            max-height: 700px;
+        }
+        
+        .section {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .info-value {
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .badge.glass {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .badge.bottle {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .badge.fixed {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .badge.editable {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .parts-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .parts-list li {
+            padding: 8px 12px;
+            background: #f5f5f5;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        
+        .log-entry {
+            padding: 4px 0;
+            word-break: break-word;
+        }
+        
+        .log-product {
+            color: #2196f3;
+            font-weight: 600;
+        }
+        
+        .log-colors {
+            color: #4caf50;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .comparison-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .comparison-card h4 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .comparison-card pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 UNBREAK ONE - Bottle Holder Support Test</h1>
+            <p>Test der 2-Produktvarianten: Glass Holder vs. Bottle Holder</p>
+        </div>
+        
+        <div class="content">
+            <div class="iframe-wrapper">
+                <iframe 
+                    id="configurator-iframe"
+                    src="http://localhost:5173"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+            </div>
+            
+            <div class="sidebar">
+                <div class="section">
+                    <h3>📦 Aktuelles Produkt</h3>
+                    <div class="info-row">
+                        <span class="info-label">Typ:</span>
+                        <span id="product-type" class="info-value">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">SKU:</span>
+                        <span id="product-sku" class="info-value">-</span>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h3>🎨 Farben</h3>
+                    <div id="colors-display">
+                        <p style="color: #999; font-size: 13px;">Warte auf Konfiguration...</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h3>🔧 Bauteile</h3>
+                    <ul id="parts-list" class="parts-list">
+                        <li style="color: #999;">Warte auf Konfiguration...</li>
+                    </ul>
+                </div>
+                
+                <button class="btn btn-primary" onclick="requestConfiguration()">
+                    🛒 GET_CONFIGURATION Test
+                </button>
+                
+                <div class="section" style="margin-top: 20px;">
+                    <h3>📋 Event Log</h3>
+                    <div id="log-container" class="log-container"></div>
+                </div>
+                
+                <div class="comparison">
+                    <div class="comparison-card">
+                        <h4>
+                            <span class="badge glass">GLASS</span>
+                            Glashalter
+                        </h4>
+                        <pre id="glass-example">{
+  product: "glass_holder",
+  colors: {
+    base: "...",
+    middle: "...",
+    top: "..."
+  }
+}</pre>
+                    </div>
+                    <div class="comparison-card">
+                        <h4>
+                            <span class="badge bottle">BOTTLE</span>
+                            Flaschenhalter
+                        </h4>
+                        <pre id="bottle-example">{
+  product: "bottle_holder",
+  colors: {
+    base: "black",
+    top: "..."
+  }
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentConfig = null;
+        let lastProduct = null;
+        
+        function addLog(message) {
+            const logContainer = document.getElementById('log-container');
+            const timestamp = new Date().toLocaleTimeString('de-DE');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span style="color: #858585;">[${timestamp}]</span> ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function updateProductDisplay(config) {
+            const product = config.product || '-';
+            const sku = config.product_sku || '-';
+            
+            document.getElementById('product-type').innerHTML = 
+                product === 'glass_holder' 
+                    ? `glass_holder <span class="badge glass">GLASS</span>`
+                    : product === 'bottle_holder'
+                        ? `bottle_holder <span class="badge bottle">BOTTLE</span>`
+                        : product;
+            
+            document.getElementById('product-sku').textContent = sku;
+            
+            // Check for product change
+            if (lastProduct && lastProduct !== product) {
+                addLog(`<span style="color: #ff9800;">⚠️ PRODUCT CHANGED: ${lastProduct} → ${product}</span>`);
+            }
+            lastProduct = product;
+        }
+        
+        function updateColorsDisplay(config) {
+            const colorsDiv = document.getElementById('colors-display');
+            
+            if (!config.colors) {
+                colorsDiv.innerHTML = '<p style="color: #999;">Keine Farben</p>';
+                return;
+            }
+            
+            const colorKeys = Object.keys(config.colors);
+            const colorRows = colorKeys.map(key => {
+                const value = config.colors[key];
+                const isFixed = key === 'base' && config.product === 'bottle_holder';
+                return `
+                    <div class="info-row">
+                        <span class="info-label">${key}:</span>
+                        <span class="info-value">
+                            ${value}
+                            ${isFixed ? '<span class="badge fixed">FIXED</span>' : ''}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+            
+            colorsDiv.innerHTML = colorRows;
+            
+            // Log color keys
+            const colorKeysStr = colorKeys.join(', ');
+            addLog(`<span class="log-colors">Colors: {${colorKeysStr}}</span>`);
+            
+            // Validate schema
+            if (config.product === 'bottle_holder') {
+                if (colorKeys.includes('middle')) {
+                    addLog(`<span style="color: #f44336;">❌ ERROR: bottle_holder should NOT have 'middle' key!</span>`);
+                } else {
+                    addLog(`<span style="color: #4caf50;">✅ OK: bottle_holder has correct schema (base, top)</span>`);
+                }
+            } else if (config.product === 'glass_holder') {
+                if (colorKeys.includes('middle')) {
+                    addLog(`<span style="color: #4caf50;">✅ OK: glass_holder has 'middle' key</span>`);
+                } else {
+                    addLog(`<span style="color: #f44336;">❌ ERROR: glass_holder missing 'middle' key!</span>`);
+                }
+            }
+        }
+        
+        function updatePartsDisplay(config) {
+            const partsList = document.getElementById('parts-list');
+            
+            if (!config.parts || config.parts.length === 0) {
+                partsList.innerHTML = '<li style="color: #999;">Keine Bauteile</li>';
+                return;
+            }
+            
+            partsList.innerHTML = config.parts.map(part => {
+                const editableBadge = part.editable 
+                    ? '<span class="badge editable">EDIT</span>' 
+                    : '<span class="badge fixed">FIXED</span>';
+                
+                return `
+                    <li>
+                        <span>${part.label_de || part.key}</span>
+                        ${editableBadge}
+                    </li>
+                `;
+            }).join('');
+        }
+        
+        function updateExamples(config) {
+            if (config.product === 'glass_holder') {
+                document.getElementById('glass-example').textContent = JSON.stringify({
+                    product: config.product,
+                    product_sku: config.product_sku,
+                    colors: config.colors,
+                    parts: config.parts
+                }, null, 2);
+            } else if (config.product === 'bottle_holder') {
+                document.getElementById('bottle-example').textContent = JSON.stringify({
+                    product: config.product,
+                    product_sku: config.product_sku,
+                    colors: config.colors,
+                    parts: config.parts
+                }, null, 2);
+            }
+        }
+        
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (!data || !data.type) return;
+            
+            switch (data.type) {
+                case 'UNBREAK_CONFIG_READY':
+                    addLog('<span style="color: #4caf50;">✅ READY</span>');
+                    break;
+                    
+                case 'configChanged':
+                    currentConfig = data.config;
+                    const reason = data.reason || 'unknown';
+                    
+                    addLog(`<span class="log-product">📦 ${data.config.product}</span> | ${reason}`);
+                    
+                    updateProductDisplay(data.config);
+                    updateColorsDisplay(data.config);
+                    updatePartsDisplay(data.config);
+                    updateExamples(data.config);
+                    break;
+                    
+                case 'UNBREAK_CONFIG_ERROR':
+                    addLog(`<span style="color: #f44336;">❌ ERROR: ${data.message}</span>`);
+                    break;
+            }
+        });
+        
+        function requestConfiguration() {
+            const iframe = document.getElementById('configurator-iframe');
+            addLog('<span style="color: #2196f3;">📥 Sending GET_CONFIGURATION...</span>');
+            
+            const startTime = Date.now();
+            
+            iframe.contentWindow.postMessage({
+                type: 'GET_CONFIGURATION'
+            }, '*');
+            
+            setTimeout(() => {
+                if (currentConfig) {
+                    const responseTime = Date.now() - startTime;
+                    addLog(`<span style="color: #4caf50;">✅ Response received in ${responseTime}ms</span>`);
+                }
+            }, 150);
+        }
+        
+        addLog('🚀 Parent window initialized, waiting for iframe...');
+    </script>
+</body>
+</html>

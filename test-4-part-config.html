@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNBREAK ONE - 4-Part Config Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .iframe-container {
+            flex: 1;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .sidebar {
+            width: 400px;
+            background: #1a1a1a;
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 1px solid #333;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status.loading {
+            background: #333;
+            color: #999;
+        }
+
+        .status.ready {
+            background: #00ff8822;
+            color: #00ff88;
+        }
+
+        .status.error {
+            background: #ff444422;
+            color: #ff4444;
+        }
+
+        .config-display {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .config-display h2 {
+            font-size: 14px;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+            font-size: 13px;
+        }
+
+        .config-item:last-child {
+            border-bottom: none;
+        }
+
+        .config-item .label {
+            color: #888;
+            font-weight: 500;
+        }
+
+        .config-item .value {
+            color: #fff;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .color-preview {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid #555;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .parts-list {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .parts-list h2 {
+            font-size: 14px;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .part-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+            font-size: 13px;
+        }
+
+        .part-item:last-child {
+            border-bottom: none;
+        }
+
+        .part-item .key {
+            color: #00ff88;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .part-item .editable {
+            background: #00ff8822;
+            color: #00ff88;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .part-item .readonly {
+            background: #ff444422;
+            color: #ff4444;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .log-container {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-container h2 {
+            font-size: 14px;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .log-entry {
+            font-size: 12px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            padding: 6px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            line-height: 1.5;
+        }
+
+        .log-entry.ready {
+            background: #00ff8811;
+            color: #00ff88;
+        }
+
+        .log-entry.config {
+            background: #0088ff11;
+            color: #0088ff;
+        }
+
+        .log-entry.error {
+            background: #ff444411;
+            color: #ff4444;
+        }
+
+        .log-entry .timestamp {
+            color: #666;
+            margin-right: 8px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 12px;
+            background: #00ff88;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.2s;
+        }
+
+        .button:hover {
+            background: #00dd77;
+            transform: translateY(-1px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .validation {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .validation h2 {
+            font-size: 14px;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .validation-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+
+        .validation-item .icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .validation-item.pass {
+            color: #00ff88;
+        }
+
+        .validation-item.fail {
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="iframe-container">
+            <iframe id="configurator-iframe" src="http://localhost:5173"></iframe>
+        </div>
+
+        <div class="sidebar">
+            <h1>🧪 4-Part Config Test</h1>
+            
+            <div id="status" class="status loading">Loading...</div>
+
+            <div class="config-display">
+                <h2>Current Configuration</h2>
+                <div class="config-item">
+                    <span class="label">Variant</span>
+                    <span class="value" id="variant">-</span>
+                </div>
+                <div class="config-item">
+                    <span class="label">SKU</span>
+                    <span class="value" id="sku">-</span>
+                </div>
+                <div class="config-item">
+                    <span class="label">Finish</span>
+                    <span class="value" id="finish">-</span>
+                </div>
+                <div class="config-item">
+                    <span class="label">Quantity</span>
+                    <span class="value" id="quantity">-</span>
+                </div>
+            </div>
+
+            <div id="colors-display" class="config-display">
+                <h2>Colors (<span id="color-count">0</span> keys)</h2>
+                <div id="colors-list"></div>
+            </div>
+
+            <div id="parts-display" class="parts-list">
+                <h2>Parts</h2>
+                <div id="parts-list"></div>
+            </div>
+
+            <div class="validation">
+                <h2>Validation</h2>
+                <div id="validation-glass-4parts" class="validation-item">
+                    <span class="icon">⏳</span>
+                    <span>Glass Holder: 4 color keys</span>
+                </div>
+                <div id="validation-bottle-2parts" class="validation-item">
+                    <span class="icon">⏳</span>
+                    <span>Bottle Holder: 2 color keys</span>
+                </div>
+                <div id="validation-response-time" class="validation-item">
+                    <span class="icon">⏳</span>
+                    <span>GET_CONFIGURATION &lt;100ms</span>
+                </div>
+            </div>
+
+            <button class="button" onclick="requestConfig()">🔍 GET_CONFIGURATION</button>
+
+            <div class="log-container">
+                <h2>Event Log</h2>
+                <div id="log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const iframe = document.getElementById('configurator-iframe');
+        const statusEl = document.getElementById('status');
+        const logEl = document.getElementById('log');
+        let currentConfig = null;
+
+        const colorPalette = {
+            mint: '#a2d9ce',
+            green: '#145a32',
+            purple: '#4a235a',
+            iceBlue: '#5499c7',
+            darkBlue: '#1b2631',
+            red: '#b03a2e',
+            black: '#121212',
+        };
+
+        function log(message, type = 'config') {
+            const timestamp = new Date().toLocaleTimeString('de-DE');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="timestamp">${timestamp}</span>${message}`;
+            logEl.insertBefore(entry, logEl.firstChild);
+            console.log(`[${type.toUpperCase()}]`, message);
+        }
+
+        function updateDisplay(config) {
+            currentConfig = config;
+
+            // Update basic info
+            document.getElementById('variant').textContent = config.variant || '-';
+            document.getElementById('sku').textContent = config.product_sku || '-';
+            document.getElementById('finish').textContent = config.finish || '-';
+            document.getElementById('quantity').textContent = config.quantity || '-';
+
+            // Update colors
+            const colorsList = document.getElementById('colors-list');
+            const colorCount = document.getElementById('color-count');
+            colorsList.innerHTML = '';
+            
+            if (config.colors) {
+                const keys = Object.keys(config.colors);
+                colorCount.textContent = keys.length;
+                
+                keys.forEach(key => {
+                    const value = config.colors[key];
+                    const item = document.createElement('div');
+                    item.className = 'config-item';
+                    
+                    const hexColor = colorPalette[value] || '#000000';
+                    
+                    item.innerHTML = `
+                        <span class="label">${key}</span>
+                        <span class="value">
+                            ${value}
+                            <span class="color-preview" style="background: ${hexColor};"></span>
+                        </span>
+                    `;
+                    colorsList.appendChild(item);
+                });
+            }
+
+            // Update parts
+            const partsList = document.getElementById('parts-list');
+            partsList.innerHTML = '';
+            
+            if (config.parts) {
+                config.parts.forEach(part => {
+                    const item = document.createElement('div');
+                    item.className = 'part-item';
+                    
+                    const editableClass = part.editable ? 'editable' : 'readonly';
+                    const editableText = part.editable ? 'EDITABLE' : 'FIXED';
+                    
+                    item.innerHTML = `
+                        <span class="key">${part.key}</span>
+                        <span class="${editableClass}">${editableText}</span>
+                    `;
+                    partsList.appendChild(item);
+                });
+            }
+
+            // Validate
+            validateConfig(config);
+        }
+
+        function validateConfig(config) {
+            const isGlassHolder = config.variant === 'glass_holder';
+            const isBottleHolder = config.variant === 'bottle_holder';
+            const colorKeys = config.colors ? Object.keys(config.colors) : [];
+
+            // Glass Holder: 4 keys required
+            const glassEl = document.getElementById('validation-glass-4parts');
+            if (isGlassHolder) {
+                const expected = ['base', 'arm', 'module', 'pattern'];
+                const hasAll = expected.every(k => colorKeys.includes(k));
+                const count = colorKeys.length;
+                
+                if (hasAll && count === 4) {
+                    glassEl.className = 'validation-item pass';
+                    glassEl.innerHTML = '<span class="icon">✅</span><span>Glass Holder: 4 color keys (PASS)</span>';
+                } else {
+                    glassEl.className = 'validation-item fail';
+                    glassEl.innerHTML = `<span class="icon">❌</span><span>Glass Holder: ${count} keys (expected 4)</span>`;
+                }
+            } else {
+                glassEl.className = 'validation-item';
+                glassEl.innerHTML = '<span class="icon">⏭️</span><span>Glass Holder: Not active</span>';
+            }
+
+            // Bottle Holder: 2 keys required
+            const bottleEl = document.getElementById('validation-bottle-2parts');
+            if (isBottleHolder) {
+                const expected = ['base', 'pattern'];
+                const hasAll = expected.every(k => colorKeys.includes(k));
+                const count = colorKeys.length;
+                
+                if (hasAll && count === 2) {
+                    bottleEl.className = 'validation-item pass';
+                    bottleEl.innerHTML = '<span class="icon">✅</span><span>Bottle Holder: 2 color keys (PASS)</span>';
+                } else {
+                    bottleEl.className = 'validation-item fail';
+                    bottleEl.innerHTML = `<span class="icon">❌</span><span>Bottle Holder: ${count} keys (expected 2)</span>`;
+                }
+            } else {
+                bottleEl.className = 'validation-item';
+                bottleEl.innerHTML = '<span class="icon">⏭️</span><span>Bottle Holder: Not active</span>';
+            }
+        }
+
+        // Listen for messages from iframe
+        window.addEventListener('message', (event) => {
+            if (event.origin !== 'http://localhost:5173') return;
+
+            const data = event.data;
+
+            switch (data.type) {
+                case 'UNBREAK_CONFIG_READY':
+                    statusEl.className = 'status ready';
+                    statusEl.textContent = 'Ready ✓';
+                    log('Configurator ready', 'ready');
+                    break;
+
+                case 'configChanged':
+                    updateDisplay(data.config);
+                    log(`Config changed: ${data.reason}`, 'config');
+                    break;
+
+                case 'UNBREAK_CONFIG_ERROR':
+                    statusEl.className = 'status error';
+                    statusEl.textContent = `Error: ${data.message}`;
+                    log(`Error: ${data.message}`, 'error');
+                    break;
+            }
+        });
+
+        function requestConfig() {
+            log('Requesting configuration from iframe...', 'config');
+            
+            const startTime = performance.now();
+            
+            iframe.contentWindow.postMessage({
+                type: 'GET_CONFIGURATION'
+            }, 'http://localhost:5173');
+            
+            // Measure response time
+            const checkResponse = () => {
+                const elapsed = performance.now() - startTime;
+                if (currentConfig && elapsed < 1000) {
+                    const responseEl = document.getElementById('validation-response-time');
+                    if (elapsed < 100) {
+                        responseEl.className = 'validation-item pass';
+                        responseEl.innerHTML = `<span class="icon">✅</span><span>GET_CONFIGURATION: ${elapsed.toFixed(1)}ms (PASS)</span>`;
+                    } else {
+                        responseEl.className = 'validation-item fail';
+                        responseEl.innerHTML = `<span class="icon">❌</span><span>GET_CONFIGURATION: ${elapsed.toFixed(1)}ms (SLOW)</span>`;
+                    }
+                }
+            };
+            
+            setTimeout(checkResponse, 150);
+        }
+
+        log('Test page loaded - waiting for iframe...', 'ready');
+    </script>
+</body>
+</html>

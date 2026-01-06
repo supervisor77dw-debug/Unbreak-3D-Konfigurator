@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Unbreak One</title>
+    <style>
+        :root {
+            --color-primary: #00FFDC;
+            --color-dark: #0A0E27;
+            --color-darker: #050812;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--color-darker) 0%, var(--color-dark) 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, var(--color-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .user-email {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .btn-logout {
+            padding: 10px 20px;
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid rgba(255, 77, 77, 0.3);
+            border-radius: 8px;
+            color: #ff9999;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-logout:hover {
+            background: rgba(255, 77, 77, 0.2);
+            border-color: rgba(255, 77, 77, 0.5);
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 40px;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .tab:hover {
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .tab.active {
+            color: var(--color-primary);
+            background: rgba(0, 255, 220, 0.1);
+            border-bottom: 2px solid var(--color-primary);
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Glass Card */
+        .glass-card {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.08) 0%, 
+                rgba(255, 255, 255, 0.04) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            text-align: left;
+            padding: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.6);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary) 0%, #00C9A7 100%);
+            color: var(--color-dark);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 255, 220, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .btn-danger {
+            background: rgba(255, 77, 77, 0.1);
+            color: #ff9999;
+            border: 1px solid rgba(255, 77, 77, 0.3);
+        }
+        
+        .btn-danger:hover {
+            background: rgba(255, 77, 77, 0.2);
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-active {
+            background: rgba(0, 255, 220, 0.1);
+            color: var(--color-primary);
+        }
+        
+        .badge-inactive {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.12) 0%, 
+                rgba(255, 255, 255, 0.08) 100%);
+            backdrop-filter: blur(30px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .modal-header h2 {
+            font-size: 24px;
+        }
+        
+        .btn-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(0, 255, 220, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert-success {
+            background: rgba(0, 255, 220, 0.1);
+            border: 1px solid rgba(0, 255, 220, 0.3);
+            color: var(--color-primary);
+        }
+        
+        .alert-error {
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid rgba(255, 77, 77, 0.3);
+            color: #ff9999;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 16px 20px;
+            }
+            
+            .container {
+                padding: 0 20px;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 8px;
+            }
+            
+            .table-container {
+                overflow-x: scroll;
+            }
+            
+            table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>Unbreak One Admin</h1>
+        </div>
+        <div class="user-info">
+            <span class="user-email" id="userEmail">Laden...</span>
+            <button class="btn-logout" id="logoutBtn">Abmelden</button>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div id="alert" class="alert"></div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('products')">Produkte</button>
+            <button class="tab" onclick="switchTab('orders')">Bestellungen</button>
+        </div>
+        
+        <!-- Products Tab -->
+        <div id="products-tab" class="tab-content active">
+            <div class="glass-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2>Produktverwaltung</h2>
+                    <button class="btn btn-primary" onclick="openProductModal()">+ Neues Produkt</button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="products-table">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Name</th>
+                                <th>Preis</th>
+                                <th>Status</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-tbody">
+                            <tr>
+                                <td colspan="5" class="loading">Produkte werden geladen...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Orders Tab -->
+        <div id="orders-tab" class="tab-content">
+            <div class="glass-card">
+                <h2 style="margin-bottom: 24px;">Bestellungen</h2>
+                <p style="color: rgba(255, 255, 255, 0.6);">Bestellübersicht wird in einer zukünftigen Version verfügbar sein.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Produkt bearbeiten</h2>
+                <button class="btn-close" onclick="closeProductModal()">&times;</button>
+            </div>
+            
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                
+                <div class="form-group">
+                    <label for="productSku">SKU *</label>
+                    <input type="text" id="productSku" required placeholder="z.B. UO-GLASS-001">
+                </div>
+                
+                <div class="form-group">
+                    <label for="productName">Produktname *</label>
+                    <input type="text" id="productName" required placeholder="z.B. Unbreak One Glas">
+                </div>
+                
+                <div class="form-group">
+                    <label for="productDescription">Beschreibung</label>
+                    <textarea id="productDescription" placeholder="Produktbeschreibung..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productPrice">Preis (€) *</label>
+                    <input type="number" id="productPrice" step="0.01" min="0" required placeholder="49.99">
+                </div>
+                
+                <div class="form-group">
+                    <label for="productImage">Bild URL</label>
+                    <input type="text" id="productImage" placeholder="https://...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="productActive">Status *</label>
+                    <select id="productActive" required>
+                        <option value="true">Aktiv</option>
+                        <option value="false">Inaktiv</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Speichern</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Abbrechen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        
+        // Supabase setup
+        const supabaseUrl = 'https://qnzsdytdghfukrqpscsg.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuenNkeXRkZ2hmdWtycXBzY3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ4NjI5NzcsImV4cCI6MjA1MDQzODk3N30.mAx4KLU_P-cXuKQW5gXFqC1pHDz8m7Ip86sJXwvD67g';
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        
+        // Global state
+        let currentUser = null;
+        let products = [];
+        
+        // Check auth on page load
+        checkAuth();
+        
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // Check if user is admin
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('role, email')
+                .eq('id', session.user.id)
+                .single();
+            
+            if (error || !profile || profile.role !== 'admin') {
+                window.location.href = '/';
+                return;
+            }
+            
+            currentUser = {
+                ...session.user,
+                role: profile.role,
+            };
+            
+            document.getElementById('userEmail').textContent = profile.email;
+            
+            // Load initial data
+            loadProducts();
+        }
+        
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = '/login.html';
+        });
+        
+        // Tab switching
+        window.switchTab = function(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+        };
+        
+        // ====== PRODUCTS ======
+        
+        async function loadProducts() {
+            try {
+                const { data, error } = await supabase
+                    .from('products')
+                    .select('*')
+                    .order('sku');
+                
+                if (error) throw error;
+                
+                products = data || [];
+                renderProductsTable();
+                
+            } catch (err) {
+                console.error('Load products error:', err);
+                showAlert('Fehler beim Laden der Produkte', 'error');
+            }
+        }
+        
+        function renderProductsTable() {
+            const tbody = document.getElementById('products-tbody');
+            
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: rgba(255,255,255,0.5);">Keine Produkte gefunden</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = products.map(product => `
+                <tr>
+                    <td><strong>${product.sku}</strong></td>
+                    <td>${product.name}</td>
+                    <td>${(product.base_price_cents / 100).toFixed(2)} €</td>
+                    <td>
+                        <span class="badge ${product.active ? 'badge-active' : 'badge-inactive'}">
+                            ${product.active ? 'Aktiv' : 'Inaktiv'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary btn-sm" onclick="editProduct('${product.id}')">
+                                Bearbeiten
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${product.id}', '${product.name}')">
+                                Löschen
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Product Modal
+        window.openProductModal = function(productId = null) {
+            const modal = document.getElementById('productModal');
+            const form = document.getElementById('productForm');
+            const title = document.getElementById('modalTitle');
+            
+            if (productId) {
+                const product = products.find(p => p.id === productId);
+                if (!product) return;
+                
+                title.textContent = 'Produkt bearbeiten';
+                document.getElementById('productId').value = product.id;
+                document.getElementById('productSku').value = product.sku;
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productDescription').value = product.description || '';
+                document.getElementById('productPrice').value = (product.base_price_cents / 100).toFixed(2);
+                document.getElementById('productImage').value = product.image_url || '';
+                document.getElementById('productActive').value = product.active.toString();
+            } else {
+                title.textContent = 'Neues Produkt';
+                form.reset();
+                document.getElementById('productId').value = '';
+            }
+            
+            modal.classList.add('show');
+        };
+        
+        window.closeProductModal = function() {
+            document.getElementById('productModal').classList.remove('show');
+        };
+        
+        window.editProduct = function(productId) {
+            openProductModal(productId);
+        };
+        
+        // Save product
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const productId = document.getElementById('productId').value;
+            const productData = {
+                sku: document.getElementById('productSku').value,
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value || null,
+                base_price_cents: Math.round(parseFloat(document.getElementById('productPrice').value) * 100),
+                image_url: document.getElementById('productImage').value || null,
+                active: document.getElementById('productActive').value === 'true',
+            };
+            
+            try {
+                let result;
+                
+                if (productId) {
+                    // Update existing product
+                    result = await supabase
+                        .from('products')
+                        .update(productData)
+                        .eq('id', productId);
+                } else {
+                    // Insert new product
+                    result = await supabase
+                        .from('products')
+                        .insert([productData]);
+                }
+                
+                if (result.error) throw result.error;
+                
+                showAlert(productId ? 'Produkt erfolgreich aktualisiert' : 'Produkt erfolgreich erstellt', 'success');
+                closeProductModal();
+                loadProducts();
+                
+            } catch (err) {
+                console.error('Save product error:', err);
+                showAlert('Fehler beim Speichern: ' + err.message, 'error');
+            }
+        });
+        
+        // Delete product
+        window.deleteProduct = async function(productId, productName) {
+            if (!confirm(`Möchten Sie "${productName}" wirklich löschen?`)) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('products')
+                    .delete()
+                    .eq('id', productId);
+                
+                if (error) throw error;
+                
+                showAlert('Produkt erfolgreich gelöscht', 'success');
+                loadProducts();
+                
+            } catch (err) {
+                console.error('Delete product error:', err);
+                showAlert('Fehler beim Löschen: ' + err.message, 'error');
+            }
+        };
+        
+        // Alert system
+        function showAlert(message, type = 'success') {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type} show`;
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Make functions globally available
+        window.loadProducts = loadProducts;
+    </script>
+</body>
+</html>
