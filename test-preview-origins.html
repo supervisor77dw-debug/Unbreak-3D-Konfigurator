@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNBREAK - Origin Pattern Test (Preview Deployments)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #00ff88;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .test-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .test-card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #00ff88;
+        }
+
+        .test-result {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Monaco', monospace;
+            font-size: 13px;
+        }
+
+        .test-result.pass {
+            background: #00ff8822;
+            color: #00ff88;
+            border-left: 3px solid #00ff88;
+        }
+
+        .test-result.fail {
+            background: #ff444422;
+            color: #ff4444;
+            border-left: 3px solid #ff4444;
+        }
+
+        .test-result.pending {
+            background: #ffaa0022;
+            color: #ffaa00;
+            border-left: 3px solid #ffaa00;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #00ff88;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #00dd77;
+        }
+
+        .log-container {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-container h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #00ff88;
+        }
+
+        .log-entry {
+            font-size: 12px;
+            font-family: 'Monaco', monospace;
+            padding: 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            background: #1a1a1a;
+            border-left: 3px solid #666;
+        }
+
+        .log-entry.success {
+            border-left-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .log-entry.error {
+            border-left-color: #ff4444;
+            color: #ff4444;
+        }
+
+        .log-entry .timestamp {
+            color: #666;
+            margin-right: 8px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        code {
+            background: #2a2a2a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 UNBREAK - Origin Pattern Test (Preview Deployments)</h1>
+
+        <div class="test-grid">
+            <!-- Test 1: Production -->
+            <div class="test-card">
+                <h2>Test 1: Production</h2>
+                <div class="test-result pending" id="test-prod">
+                    ⏳ Waiting for message...
+                </div>
+                <p style="margin-top: 10px; color: #888; font-size: 13px;">
+                    Expected: <code>https://unbreak-one.vercel.app</code>
+                </p>
+            </div>
+
+            <!-- Test 2: Preview Deployment -->
+            <div class="test-card">
+                <h2>Test 2: Preview Pattern</h2>
+                <div class="test-result pending" id="test-preview">
+                    ⏳ Testing regex pattern...
+                </div>
+                <p style="margin-top: 10px; color: #888; font-size: 13px;">
+                    Pattern: <code>/^https:\/\/unbreak-[a-z0-9-]+\.vercel\.app$/i</code>
+                </p>
+                <button onclick="testPreviewPattern()">Run Pattern Test</button>
+            </div>
+
+            <!-- Test 3: Localhost -->
+            <div class="test-card">
+                <h2>Test 3: Localhost</h2>
+                <div class="test-result pending" id="test-localhost">
+                    ⏳ Simulating localhost origin...
+                </div>
+                <p style="margin-top: 10px; color: #888; font-size: 13px;">
+                    Expected: <code>http://localhost:3000</code>
+                </p>
+                <button onclick="testLocalhost()">Simulate Localhost</button>
+            </div>
+
+            <!-- Test 4: Forbidden Origin -->
+            <div class="test-card">
+                <h2>Test 4: Forbidden Origin</h2>
+                <div class="test-result pending" id="test-forbidden">
+                    ⏳ Testing security blocking...
+                </div>
+                <p style="margin-top: 10px; color: #888; font-size: 13px;">
+                    Should FAIL: <code>https://evil-site.com</code>
+                </p>
+                <button onclick="testForbidden()">Test Security Block</button>
+            </div>
+        </div>
+
+        <div class="log-container">
+            <h2>📋 Event Log</h2>
+            <div id="log"></div>
+        </div>
+
+        <!-- iFrame (adjust src to your deployment) -->
+        <iframe 
+            id="configurator-iframe" 
+            src="http://localhost:5173"
+            title="UNBREAK Configurator"
+        ></iframe>
+    </div>
+
+    <script>
+        const logEl = document.getElementById('log');
+
+        function log(message, type = 'success') {
+            const timestamp = new Date().toLocaleTimeString('de-DE');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="timestamp">${timestamp}</span>${message}`;
+            logEl.insertBefore(entry, logEl.firstChild);
+            console.log(`[${type.toUpperCase()}]`, message);
+        }
+
+        // Listen for messages from iframe
+        window.addEventListener('message', (event) => {
+            log(`Message received from: ${event.origin}`, 'success');
+            log(`Message type: ${event.data?.type}`, 'success');
+            
+            if (event.data?.type === 'configChanged') {
+                const testProd = document.getElementById('test-prod');
+                testProd.className = 'test-result pass';
+                testProd.innerHTML = '✅ Message received from configurator';
+                
+                log(`Config received: ${JSON.stringify(event.data.config?.variant)}`, 'success');
+            }
+        });
+
+        // Send handshake to iframe
+        setTimeout(() => {
+            const iframe = document.getElementById('configurator-iframe');
+            iframe.contentWindow.postMessage({
+                type: 'UNBREAK_ONE_PARENT_HELLO'
+            }, 'http://localhost:5173');
+            
+            log('Sent PARENT_HELLO handshake to iframe', 'success');
+        }, 2000);
+
+        // Test Preview Pattern
+        function testPreviewPattern() {
+            const pattern = /^https:\/\/unbreak-[a-z0-9-]+\.vercel\.app$/i;
+            
+            const testCases = [
+                { origin: 'https://unbreak-abc123.vercel.app', expected: true },
+                { origin: 'https://unbreak-git-main-team.vercel.app', expected: true },
+                { origin: 'https://unbreak-pr-42-team.vercel.app', expected: true },
+                { origin: 'https://unbreak-one.vercel.app', expected: true },
+                { origin: 'https://evil-unbreak-one.vercel.app', expected: false },
+                { origin: 'https://unbreak-one.vercel.app.evil.com', expected: false },
+                { origin: 'http://unbreak-one.vercel.app', expected: false }, // HTTP not HTTPS
+            ];
+            
+            let allPassed = true;
+            testCases.forEach(test => {
+                const result = pattern.test(test.origin);
+                const passed = result === test.expected;
+                
+                if (!passed) allPassed = false;
+                
+                log(
+                    `Pattern test: ${test.origin} → ${result ? 'ALLOWED' : 'BLOCKED'} (${passed ? 'PASS' : 'FAIL'})`,
+                    passed ? 'success' : 'error'
+                );
+            });
+            
+            const testPreview = document.getElementById('test-preview');
+            if (allPassed) {
+                testPreview.className = 'test-result pass';
+                testPreview.innerHTML = '✅ All pattern tests passed';
+            } else {
+                testPreview.className = 'test-result fail';
+                testPreview.innerHTML = '❌ Some pattern tests failed';
+            }
+        }
+
+        // Test Localhost
+        function testLocalhost() {
+            const allowedOrigins = new Set([
+                'http://localhost:3000',
+                'http://localhost:5173',
+            ]);
+            
+            const isAllowed = allowedOrigins.has('http://localhost:3000');
+            
+            const testLocalhost = document.getElementById('test-localhost');
+            if (isAllowed) {
+                testLocalhost.className = 'test-result pass';
+                testLocalhost.innerHTML = '✅ Localhost is allowed';
+                log('Localhost origin check: PASS', 'success');
+            } else {
+                testLocalhost.className = 'test-result fail';
+                testLocalhost.innerHTML = '❌ Localhost is blocked';
+                log('Localhost origin check: FAIL', 'error');
+            }
+        }
+
+        // Test Forbidden Origin
+        function testForbidden() {
+            const pattern = /^https:\/\/unbreak-[a-z0-9-]+\.vercel\.app$/i;
+            const staticAllowed = new Set([
+                'https://unbreak-one.vercel.app',
+                'http://localhost:3000',
+            ]);
+            
+            const evilOrigin = 'https://evil-site.com';
+            const isAllowed = staticAllowed.has(evilOrigin) || pattern.test(evilOrigin);
+            
+            const testForbidden = document.getElementById('test-forbidden');
+            if (!isAllowed) {
+                testForbidden.className = 'test-result pass';
+                testForbidden.innerHTML = '✅ Evil origin correctly blocked';
+                log('Security test: Evil origin blocked (PASS)', 'success');
+            } else {
+                testForbidden.className = 'test-result fail';
+                testForbidden.innerHTML = '❌ Security breach! Evil origin allowed';
+                log('Security test: Evil origin allowed (FAIL)', 'error');
+            }
+        }
+
+        log('Test page loaded - waiting for iframe...', 'success');
+    </script>
+</body>
+</html>

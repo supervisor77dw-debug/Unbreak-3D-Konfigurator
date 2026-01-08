@@ -2,15 +2,18 @@
  * UNBREAK ONE - iframe Communication Bridge (PRODUCTION READY)
  * Handles postMessage communication between configurator (child) and parent window
  * 
- * SECURITY: Strict origin allowlist - NO WILDCARDS
+ * SECURITY: Pattern-based origin validation for Preview Deployments
  * RELIABILITY: Guaranteed delivery with fallbacks
  */
 
 // ============================================
-// ALLOWED PARENT ORIGINS (STRICT WHITELIST)
+// ALLOWED PARENT ORIGINS
 // ============================================
-const ALLOWED_PARENTS = new Set([
-    'https://unbreak-2fort2m7j-supervisor77dw-debugs-projects.vercel.app',
+
+/**
+ * Static allowed parent origins (production + localhost)
+ */
+const STATIC_ALLOWED_PARENTS = new Set([
     'https://unbreak-one.vercel.app',
     'https://www.unbreak-one.com',
     'https://unbreak-one.com',
@@ -22,27 +25,88 @@ const ALLOWED_PARENTS = new Set([
 ]);
 
 /**
- * Get parent origin from referrer or stored value
- * @returns {string|null} Parent origin or null if not in iframe
+ * Check if parent origin is allowed
+ * CRITICAL: Supports Vercel Preview Deployments via pattern matching
+ * 
+ * Allowed patterns:
+ * - https://unbreak-one.vercel.app (production)
+ * - https://unbreak-[preview-id].vercel.app (preview deployments)
+ * - http://localhost:3000 (local dev)
+ * 
+ * @param {string} origin - Origin to validate
+ * @returns {boolean} True if origin is allowed
+ */
+function isParentOriginAllowed(origin) {
+    if (!origin) return false;
+    
+    // Check static whitelist first
+    if (STATIC_ALLOWED_PARENTS.has(origin)) {
+        return true;
+    }
+    
+    // Pattern match for Vercel Preview Deployments
+    // Matches: https://unbreak-[a-z0-9-]+.vercel.app
+    const vercelPreviewPattern = /^https:\/\/unbreak-[a-z0-9-]+\.vercel\.app$/i;
+    return vercelPreviewPattern.test(origin);
+}
+
+/**
+ * Global variable to store validated parent origin from handshake
+ * Used when document.referrer is unavailable
+ */
+let resolvedParentOrigin = null;
+
+/**
+ * Get parent origin from referrer
+ * CRITICAL: Cannot use window.parent.location.origin due to cross-origin restrictions
+ * 
+ * @returns {string|null} Parent origin or null if unavailable
+ */
+function getParentOriginFromReferrer() {
+    try {
+        if (!document.referrer) return null;
+        return new URL(document.referrer).origin;
+    } catch (e) {
+        console.warn('[UNBREAK_IFRAME] Invalid referrer URL:', document.referrer);
+        return null;
+    }
+}
+
+/**
+ * Get validated parent origin
+ * Try: 1) Handshake origin, 2) Referrer, 3) Fallback to production
+ * 
+ * @returns {string} Validated parent origin
  */
 function getParentOrigin() {
     if (window.parent === window) return null; // Not in iframe
     
-    // Try document.referrer first (most reliable in iframe)
-    if (document.referrer) {
-        try {
-            return new URL(document.referrer).origin;
-        } catch (e) {
-            console.warn('[UNBREAK_IFRAME] Invalid referrer URL:', document.referrer);
-        }
+    // Try resolved origin from handshake (most reliable)
+    if (resolvedParentOrigin && isParentOriginAllowed(resolvedParentOrigin)) {
+        return resolvedParentOrigin;
     }
     
-    // Fallback: use stored origin from GET_CONFIGURATION handler
-    return window.__unbreakParentOrigin || null;
+    // Try document.referrer (works in most cases)
+    const referrerOrigin = getParentOriginFromReferrer();
+    if (referrerOrigin && isParentOriginAllowed(referrerOrigin)) {
+        return referrerOrigin;
+    }
+    
+    // Fallback: use stored origin from previous messages
+    const storedOrigin = window.__unbreakParentOrigin;
+    if (storedOrigin && isParentOriginAllowed(storedOrigin)) {
+        return storedOrigin;
+    }
+    
+    // Safe default fallback (production)
+    console.warn('[UNBREAK_IFRAME] Could not determine parent origin, using production fallback');
+    return 'https://unbreak-one.vercel.app';
 }
 
 /**
  * Send a message to the parent window (SECURE)
+ * Uses dynamic targetOrigin based on validated parent origin
+ * 
  * @param {object} payload - Full message payload (must include 'type' field)
  * @param {string} reason - Optional reason/context for logging
  */
@@ -55,18 +119,15 @@ export const postToParent = (payload, reason = '') => {
     const parentOrigin = getParentOrigin();
     
     if (!parentOrigin) {
-        console.warn('[UNBREAK_IFRAME] Cannot determine parent origin - postMessage blocked', payload.type);
-        return;
+        console.warn('[UNBREAK_IFRAME] Cannot determine parent origin - using production fallback');
     }
     
-    if (!ALLOWED_PARENTS.has(parentOrigin)) {
-        console.warn('[UNBREAK_IFRAME] BLOCKED postMessage - unknown parent origin:', parentOrigin, payload.type);
-        return;
-    }
+    // Validate origin (with fallback already validated)
+    const targetOrigin = parentOrigin || 'https://unbreak-one.vercel.app';
     
-    // Send message with explicit origin
-    window.parent.postMessage(payload, parentOrigin);
-    console.info(`[UNBREAK_IFRAME] postMessage -> ${parentOrigin} | ${payload.type}${reason ? ' | ' + reason : ''}`, payload);
+    // Send message with dynamic targetOrigin (NOT wildcard '*')
+    window.parent.postMessage(payload, targetOrigin);
+    console.info(`[UNBREAK_IFRAME] postMessage -> ${targetOrigin} | ${payload.type}${reason ? ' | ' + reason : ''}`, payload);
 };
 
 /**
@@ -134,21 +195,43 @@ export const broadcastConfig = (config, reason = 'update') => {
 /**
  * Initialize GET_CONFIGURATION listener (PULL)
  * Parent can request current config at any time
+ * Also handles PARENT_HELLO handshake for origin resolution
+ * 
  * @param {function} getConfigFn - Function that returns current config object
  */
 export const initConfigurationListener = (getConfigFn) => {
     const handler = (event) => {
         try {
             if (!event?.data) return;
+            
+            // Handle parent handshake (for origin resolution)
+            if (event.data.type === 'UNBREAK_ONE_PARENT_HELLO') {
+                if (isParentOriginAllowed(event.origin)) {
+                    resolvedParentOrigin = event.origin;
+                    window.__unbreakParentOrigin = event.origin;
+                    console.info('[UNBREAK_IFRAME] Parent handshake received from', event.origin);
+                    
+                    // Acknowledge handshake
+                    event.source?.postMessage({
+                        type: 'UNBREAK_ONE_CHILD_READY',
+                    }, event.origin);
+                } else {
+                    console.warn('[UNBREAK_IFRAME] Handshake blocked from unknown origin:', event.origin);
+                }
+                return;
+            }
+            
+            // Handle GET_CONFIGURATION request
             if (event.data.type !== 'GET_CONFIGURATION') return;
             
             // Security check: verify origin
-            if (!ALLOWED_PARENTS.has(event.origin)) {
+            if (!isParentOriginAllowed(event.origin)) {
                 console.warn('[UNBREAK_IFRAME] GET_CONFIGURATION blocked from unknown origin:', event.origin);
                 return;
             }
             
             // Store parent origin for future postMessage calls
+            resolvedParentOrigin = event.origin;
             window.__unbreakParentOrigin = event.origin;
             
             console.info('[UNBREAK_IFRAME] GET_CONFIGURATION received from', event.origin);
@@ -172,18 +255,18 @@ export const initConfigurationListener = (getConfigFn) => {
             console.info('[UNBREAK_IFRAME] Responded to GET_CONFIGURATION', event.origin, config);
             
         } catch (err) {
-            console.error('[UNBREAK_IFRAME] GET_CONFIGURATION handler error:', err);
-            notifyError('GET_CONFIGURATION handler failed', err.stack);
+            console.error('[UNBREAK_IFRAME] Message handler error:', err);
+            notifyError('Message handler failed', err.stack);
         }
     };
     
     window.addEventListener('message', handler);
-    console.info('[UNBREAK_IFRAME] GET_CONFIGURATION listener initialized');
+    console.info('[UNBREAK_IFRAME] Message listener initialized (GET_CONFIGURATION + PARENT_HELLO)');
     
     // Return cleanup function
     return () => {
         window.removeEventListener('message', handler);
-        console.info('[UNBREAK_IFRAME] GET_CONFIGURATION listener removed');
+        console.info('[UNBREAK_IFRAME] Message listener removed');
     };
 };
 
