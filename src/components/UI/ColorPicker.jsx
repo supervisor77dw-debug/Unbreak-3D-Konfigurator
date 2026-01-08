@@ -1,20 +1,21 @@
 import React from 'react';
 import { useConfigurator, COLOR_PALETTE } from '../../context/ConfiguratorContext';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './ColorPicker.module.css';
 
-const ColorSection = ({ title, activeColor, onSelect }) => {
+const ColorSection = ({ title, activeColor, onSelect, t }) => {
     return (
         <div className={styles.section}>
             <h4>{title}</h4>
             <div className={styles.palette}>
-                {Object.entries(COLOR_PALETTE).map(([name, hex]) => (
+                {Object.entries(COLOR_PALETTE).map(([colorKey, hex]) => (
                     <button
-                        key={name}
-                        className={`${styles.swatch} ${activeColor === name ? styles.active : ''}`}
+                        key={colorKey}
+                        className={`${styles.swatch} ${activeColor === colorKey ? styles.active : ''}`}
                         style={{ backgroundColor: hex }}
-                        onClick={() => onSelect(name)}
-                        aria-label={name}
-                        title={name}
+                        onClick={() => onSelect(colorKey)}
+                        aria-label={t(`colors.${colorKey}`)}
+                        title={t(`colors.${colorKey}`)}
                     />
                 ))}
             </div>
@@ -24,6 +25,7 @@ const ColorSection = ({ title, activeColor, onSelect }) => {
 
 const ColorPicker = () => {
     const { colors, updateColor, pattern, variant } = useConfigurator();
+    const { t } = useLanguage();
     const isBottleHolder = variant === 'bottle_holder';
 
     return (
@@ -31,27 +33,31 @@ const ColorPicker = () => {
             {!isBottleHolder && (
                 <>
                     <ColorSection
-                        title="Grundplatte"
+                        title={t('parts.base')}
                         activeColor={colors.base}
                         onSelect={(color) => updateColor('base', color)}
+                        t={t}
                     />
                     <ColorSection
-                        title="Arm"
+                        title={t('parts.arm')}
                         activeColor={colors.arm}
                         onSelect={(color) => updateColor('arm', color)}
+                        t={t}
                     />
                     <ColorSection
-                        title="Gummilippe"
+                        title={t('parts.module')}
                         activeColor={colors.module}
                         onSelect={(color) => updateColor('module', color)}
+                        t={t}
                     />
                 </>
             )}
 
             <ColorSection
-                title="Windrose"
+                title={t('parts.pattern')}
                 activeColor={colors.pattern}
                 onSelect={(color) => updateColor('pattern', color)}
+                t={t}
             />
         </div>
     );

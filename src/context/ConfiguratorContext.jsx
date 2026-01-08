@@ -20,12 +20,17 @@ export const CONFIGURATION_DEFAULTS = {
     quantity: 1,
 };
 
+/**
+ * COLOR PALETTE - Technical Keys (snake_case)
+ * CRITICAL: Keys MUST match backend schema
+ * HEX values for rendering only
+ */
 export const COLOR_PALETTE = {
     mint: '#a2d9ce',
     green: '#145a32',
     purple: '#4a235a',
-    iceBlue: '#5499c7',
-    darkBlue: '#1b2631',
+    ice_blue: '#5499c7',    // snake_case (was: iceBlue)
+    dark_blue: '#1b2631',   // snake_case (was: darkBlue)
     red: '#b03a2e',
     black: '#121212',
 };
@@ -82,6 +87,37 @@ const buildConfig = ({ nextVariant, nextColors, nextFinish, nextQty }) => {
         quantity: nextQty,
         config_version: '1.0.0',
     };
+};
+
+/**
+ * Build config_json for backend (technical keys only)
+ * CRITICAL: Must use snake_case keys, NO translated labels
+ * @param {object} params - { nextVariant, nextColors, nextFinish, nextQty, lang }
+ * @returns {object} Backend-compatible config_json
+ */
+export const buildConfigJSON = ({ nextVariant, nextColors, nextFinish, nextQty, lang = 'de' }) => {
+    const isBottleHolder = nextVariant === 'bottle_holder';
+    
+    const configJSON = {
+        product_type: nextVariant,
+        finish: nextFinish,
+        quantity: nextQty,
+        lang: lang, // Optional: for backend tracking/debugging
+    };
+    
+    // Add color keys based on product type
+    if (isBottleHolder) {
+        configJSON.base = 'black'; // Fixed for bottle holder
+        configJSON.pattern = nextColors.pattern;
+    } else {
+        // Glass holder: all 4 parts
+        configJSON.base = nextColors.base;
+        configJSON.arm = nextColors.arm;
+        configJSON.module = nextColors.module;
+        configJSON.pattern = nextColors.pattern;
+    }
+    
+    return configJSON;
 };
 
 export const ConfiguratorProvider = ({ children }) => {

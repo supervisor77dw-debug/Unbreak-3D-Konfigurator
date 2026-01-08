@@ -1,51 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { ConfiguratorProvider } from './context/ConfiguratorContext';
+import { ConfiguratorProvider, buildConfigJSON } from './context/ConfiguratorContext';
 import Scene from './components/3D/Scene';
 import TopBar from './components/UI/TopBar';
 import PanelHost from './components/UI/PanelHost';
 import { notifyLoading, initTimeoutFallback, broadcastConfig } from './utils/iframeBridge';
 import { useConfigurator } from './context/ConfiguratorContext';
+import { useLanguage } from './i18n/LanguageContext';
 import './index.css';
 
 function ConfiguratorContent() {
-  const { variant, setVariant, colors, getCurrentConfig } = useConfigurator();
+  const { variant, setVariant, colors, finish, quantity, getCurrentConfig } = useConfigurator();
+  const { t, language } = useLanguage();
   const [activePanel, setActivePanel] = useState(null);
 
-  // Broadcast initial configuration once on mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const config = getCurrentConfig();
-      broadcastConfig(config, 'initial_config');
-      console.log('[ConfiguratorContent] Initial config broadcasted to parent');
-    }, 500); // Wait 500ms to ensure context is fully initialized
-    
-    return () => clearTimeout(timer);
-  }, []); // Only run once on mount
+  // NOTE: Initial config broadcast is now handled in ConfiguratorContext useEffect
+  // No duplicate broadcast needed here
 
   const handleAddToCart = () => {
     const config = getCurrentConfig();
     
-    const output = {
-      product_name: 'UNBREAK ONE',
-      product_variant: variant,
-      colors: {
-        baseplate: colors.base,
-        arm: colors.arm,
-        insert: colors.module,
-        pattern: colors.pattern,
-      },
-      security: {
-        obfuscation_enabled: true
-      }
-    };
+    // Build backend-compatible config_json (technical keys only)
+    const configJSON = buildConfigJSON({
+      nextVariant: variant,
+      nextColors: colors,
+      nextFinish: finish,
+      nextQty: quantity,
+      lang: language,
+    });
 
-    console.log('Checkout Configuration:', output);
-    console.log('Parent Config Format:', config);
+    console.log('[App] Checkout Configuration (config_json):', configJSON);
+    console.log('[App] Parent Config Format (with labels):', config);
     
     // Send to parent (if in iframe)
     broadcastConfig(config, 'add_to_cart');
     
-    alert(`Zum Warenkorb hinzugefügt!\nKonfiguration in der Konsole anzeigen.`);
+    alert(`${t('ui.addToCart')}!\n${t('messages.configSaved')}`);
   };
 
   const handleResetView = () => {
