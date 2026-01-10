@@ -261,18 +261,30 @@
 
             // Handle UNBREAK_GET_LANG request from iframe
             if (msg.type === 'UNBREAK_GET_LANG') {
-                log('📥 Received UNBREAK_GET_LANG request from iframe', 'info');
+                log('[LANG][PARENT][RECEIVED] UNBREAK_GET_LANG request from iframe', 'info');
                 
                 // Respond with current language
                 setTimeout(() => {
-                    setLanguage(currentLang);
-                    log(`📤 Responded with language: ${currentLang}`, 'success');
+                    const iframe = document.getElementById('configurator-iframe');
+                    iframe.contentWindow.postMessage({
+                        type: 'UNBREAK_SET_LANG',
+                        lang: currentLang
+                    }, 'http://localhost:5173');
+                    
+                    log(`[LANG][PARENT->IFRAME][SET_LANG] ${currentLang}`, 'success');
                 }, 50);
             }
             
             // Handle UNBREAK_LANG_ACK acknowledgment
             if (msg.type === 'UNBREAK_LANG_ACK') {
-                log(`✅ Received UNBREAK_LANG_ACK: ${msg.lang}`, 'success');
+                log(`[LANG][PARENT][ACK_RECEIVED] ${msg.lang}`, 'success');
+                
+                // Verify language matches
+                if (msg.lang === currentLang) {
+                    log(`✅ Language synchronized: ${msg.lang}`, 'success');
+                } else {
+                    log(`⚠️ Language mismatch! Parent: ${currentLang}, iFrame: ${msg.lang}`, 'error');
+                }
             }
             
             // Handle other messages

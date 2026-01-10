@@ -19,16 +19,18 @@ const getLanguageFromURL = () => {
 };
 
 export const LanguageProvider = ({ children }) => {
-    // Try URL parameter first, fallback to 'de'
+    // Start with URL parameter or wait for parent response
     const [language, setLanguage] = useState(() => {
         const urlLang = getLanguageFromURL();
         if (urlLang) {
-            console.info(`[i18n] Language from URL: ${urlLang}`);
+            console.info(`[LANG][IFRAME][INIT] Language from URL: ${urlLang}`);
             return urlLang;
         }
-        console.info('[i18n] Using default language: de');
-        return 'de';
+        console.info('[LANG][IFRAME][INIT] Waiting for parent language...');
+        return 'de'; // Temporary default, will be updated by parent
     });
+
+    const [hasReceivedLanguage, setHasReceivedLanguage] = useState(false);
 
     // ALLOWED ORIGINS for language control (same as iframeBridge)
     const ALLOWED_ORIGINS = [
@@ -45,6 +47,35 @@ export const LanguageProvider = ({ children }) => {
         return /^https:\/\/unbreak-[a-z0-9-]+\.vercel\.app$/i.test(origin);
     };
 
+    // Request language from parent on init
+    useEffect(() => {
+        // Skip if we have URL parameter
+        if (getLanguageFromURL()) {
+            setHasReceivedLanguage(true);
+            return;
+        }
+
+        // Request language from parent
+        if (window.parent !== window) {
+            console.info('[LANG][IFRAME->PARENT][GET_LANG] Requesting language from parent...');
+            window.parent.postMessage(
+                { type: 'UNBREAK_GET_LANG' },
+                '*' // Will be validated on response
+            );
+
+            // Fallback: If no response after 500ms, use default 'de'
+            const fallbackTimer = setTimeout(() => {
+                if (!hasReceivedLanguage) {
+                    console.info('[LANG][IFRAME][FALLBACK] No response from parent, using default: de');
+                    setLanguage('de');
+                    setHasReceivedLanguage(true);
+                }
+            }, 500);
+
+            return () => clearTimeout(fallbackTimer);
+        }
+    }, [hasReceivedLanguage]);
+
     // Listen for UNBREAK_SET_LANG messages from parent window
     useEffect(() => {
         const handleMessage = (event) => {
@@ -54,50 +85,41 @@ export const LanguageProvider = ({ children }) => {
             
             // UNBREAK_SET_LANG: External language control
             if (msg.type === 'UNBREAK_SET_LANG') {
+                console.info(`[LANG][IFRAME][RECEIVED] ${msg.lang} from ${event.origin}`);
+                
                 // Origin validation
                 if (!isOriginAllowed(event.origin)) {
-                    console.warn(`[i18n] BLOCKED language change from: ${event.origin}`);
+                    console.warn(`[LANG][IFRAME][BLOCKED] Invalid origin: ${event.origin}`);
                     return;
                 }
                 
                 const newLang = msg.lang;
                 
                 if (newLang === 'de' || newLang === 'en') {
-                    console.info(`[i18n] Language changed via UNBREAK_SET_LANG: ${newLang}`);
+                    // Apply language
                     setLanguage(newLang);
+                    setHasReceivedLanguage(true);
+                    console.info(`[LANG][IFRAME][APPLIED] ${newLang}`);
                     
-                    // Send ACK to parent
+                    // Send ACK to parent (ALWAYS)
                     event.source?.postMessage(
                         { type: 'UNBREAK_LANG_ACK', lang: newLang },
                         event.origin
                     );
+                    console.info(`[LANG][IFRAME->PARENT][ACK] ${newLang}`);
                 } else {
-                    console.warn(`[i18n] Invalid language received: ${newLang}`);
-                }
-            }
-            
-            // Fallback: Support old SET_LANGUAGE format (backward compatibility)
-            if (msg.type === 'SET_LANGUAGE') {
-                if (!isOriginAllowed(event.origin)) {
-                    console.warn(`[i18n] BLOCKED language change from: ${event.origin}`);
-                    return;
-                }
-                
-                const newLang = msg.lang;
-                if (newLang === 'de' || newLang === 'en') {
-                    console.info(`[i18n] Language changed via SET_LANGUAGE (legacy): ${newLang}`);
-                    setLanguage(newLang);
+                    console.warn(`[LANG][IFRAME][INVALID] Unsupported language: ${newLang}`);
                 }
             }
         };
         
         window.addEventListener('message', handleMessage);
-        console.info('[i18n] UNBREAK_SET_LANG listener initialized');
+        console.info('[LANG][IFRAME][LISTENER] UNBREAK_SET_LANG listener ready');
         
         return () => {
             window.removeEventListener('message', handleMessage);
         };
-    }, []);
+    }, [hasReceivedLanguage]);
 
     // Register global language setter for external control
     useEffect(() => {
