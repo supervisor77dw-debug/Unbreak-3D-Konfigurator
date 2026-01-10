@@ -29,8 +29,8 @@ const Interface = () => {
             }
         };
 
-        console.log('Checkout Configuration:', output);
-        alert(`Zum Warenkorb hinzugefügt!\nKonfiguration in der Konsole anzeigen.`);
+        console.info('[Interface] Checkout Configuration:', output);
+        // Production: No UI alerts/popups
     };
 
     const handleResetView = () => {

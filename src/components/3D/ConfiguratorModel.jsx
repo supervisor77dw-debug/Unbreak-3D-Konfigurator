@@ -5,6 +5,7 @@ import { useGLTF } from '@react-three/drei';
 import { useThree, useFrame } from '@react-three/fiber';
 import { getObfuscatedScale, obfuscateGeometry } from '../../utils/obfuscation';
 import { notifyReady } from '../../utils/iframeBridge';
+import { isDebugUIEnabled } from '../../config/debug';
 import * as THREE from 'three';
 
 /**
@@ -229,8 +230,8 @@ const ConfiguratorModel = () => {
             }
         };
         
-        // Debug overlay (only if ?debug=1)
-        if (window.location.search.includes('debug=1')) {
+        // Debug overlay (only if debug UI is enabled)
+        if (isDebugUIEnabled()) {
             const debugDiv = document.createElement('div');
             debugDiv.id = 'u1-debug-overlay';
             debugDiv.style.cssText = `

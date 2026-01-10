@@ -154,6 +154,15 @@ export const notifyReady = (version = null) => {
     });
     
     console.info('[UNBREAK_IFRAME] READY sent');
+    
+    // Request initial language from parent
+    setTimeout(() => {
+        postToParent(
+            { type: 'UNBREAK_GET_LANG' },
+            'get_lang_request'
+        );
+        console.info('[UNBREAK_IFRAME] Requested language from parent (UNBREAK_GET_LANG)');
+    }, 100); // Small delay to ensure parent listener is ready
 };
 
 /**

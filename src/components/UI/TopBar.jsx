@@ -1,7 +1,9 @@
 import React from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './TopBar.module.css';
 
 const TopBar = ({ activePanel, onPanelToggle, variant, setVariant }) => {
+    const { t } = useLanguage();
     const handlePanelClick = (panel) => {
         onPanelToggle(activePanel === panel ? null : panel);
     };
@@ -12,7 +14,7 @@ const TopBar = ({ activePanel, onPanelToggle, variant, setVariant }) => {
                 {/* Brand */}
                 <div className={styles.brand}>
                     <h1 className={styles.brandName}>UNBREAK ONE</h1>
-                    <span className={styles.brandSub}>Konfigurator</span>
+                    <span className={styles.brandSub}>{t('ui.configurator')}</span>
                 </div>
 
                 {/* Product Variant Toggle */}
@@ -21,13 +23,13 @@ const TopBar = ({ activePanel, onPanelToggle, variant, setVariant }) => {
                         className={`${styles.variantBtn} ${variant === 'glass_holder' ? styles.active : ''}`}
                         onClick={() => setVariant('glass_holder')}
                     >
-                        Glashalter
+                        {t('products.glass_holder')}
                     </button>
                     <button
                         className={`${styles.variantBtn} ${variant === 'bottle_holder' ? styles.active : ''}`}
                         onClick={() => setVariant('bottle_holder')}
                     >
-                        Flaschenhalter
+                        {t('products.bottle_holder')}
                     </button>
                 </div>
 
@@ -36,18 +38,18 @@ const TopBar = ({ activePanel, onPanelToggle, variant, setVariant }) => {
                     <button
                         className={`${styles.actionBtn} ${activePanel === 'colors' ? styles.activePanel : ''}`}
                         onClick={() => handlePanelClick('colors')}
-                        aria-label="Farbauswahl"
+                        aria-label={t('ui.colors')}
                     >
                         <span className={styles.icon}>🎨</span>
-                        <span className={styles.label}>Farben</span>
+                        <span className={styles.label}>{t('ui.colors')}</span>
                     </button>
                     <button
                         className={`${styles.actionBtn} ${activePanel === 'actions' ? styles.activePanel : ''}`}
                         onClick={() => handlePanelClick('actions')}
-                        aria-label="Aktionen"
+                        aria-label={t('ui.actions')}
                     >
                         <span className={styles.icon}>⚙️</span>
-                        <span className={styles.label}>Aktionen</span>
+                        <span className={styles.label}>{t('ui.actions')}</span>
                     </button>
                 </div>
             </div>

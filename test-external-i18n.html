@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNBREAK - External i18n Control Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #00ff88;
+        }
+
+        .control-panel {
+            background: #1a1a1a;
+            border: 2px solid #00ff88;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .control-panel h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #00ff88;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .lang-button {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #2a2a2a;
+            color: #ffffff;
+        }
+
+        .lang-button:hover {
+            background: #3a3a3a;
+            border-color: #00ff88;
+        }
+
+        .lang-button.active {
+            background: #00ff88;
+            color: #000000;
+            border-color: #00ff88;
+        }
+
+        .status {
+            flex: 1;
+            padding: 15px;
+            background: #0f0f0f;
+            border-radius: 6px;
+            font-family: 'Monaco', monospace;
+            font-size: 13px;
+            color: #00ff88;
+        }
+
+        .log-container {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .log-container h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #00ff88;
+        }
+
+        .log-entry {
+            font-size: 12px;
+            font-family: 'Monaco', monospace;
+            padding: 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            background: #1a1a1a;
+            border-left: 3px solid #666;
+        }
+
+        .log-entry.success {
+            border-left-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .log-entry.info {
+            border-left-color: #5499c7;
+            color: #5499c7;
+        }
+
+        .log-entry.error {
+            border-left-color: #ff4444;
+            color: #ff4444;
+        }
+
+        .log-entry .timestamp {
+            color: #666;
+            margin-right: 8px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 700px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        .test-info {
+            background: #2a2a2a;
+            border-left: 4px solid #ffaa00;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+
+        .test-info h3 {
+            color: #ffaa00;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .test-info ul {
+            margin-left: 20px;
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', monospace;
+            font-size: 12px;
+            color: #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 UNBREAK - External i18n Control Test</h1>
+
+        <div class="test-info">
+            <h3>📋 Test Requirements</h3>
+            <ul>
+                <li>✅ Parent can switch DE/EN via <code>UNBREAK_SET_LANG</code></li>
+                <li>✅ iFrame UI changes in &lt;1s without reload</li>
+                <li>✅ iFrame sends <code>UNBREAK_GET_LANG</code> on init</li>
+                <li>✅ Parent responds with <code>UNBREAK_SET_LANG</code></li>
+                <li>✅ iFrame sends <code>UNBREAK_LANG_ACK</code> confirmation</li>
+                <li>✅ No hardcoded German/English strings visible (all via translations)</li>
+                <li>✅ No debug popups/alerts in iFrame</li>
+            </ul>
+        </div>
+
+        <div class="control-panel">
+            <h2>🎛️ Language Control (Parent)</h2>
+            <div class="controls">
+                <button class="lang-button active" id="btn-de" onclick="setLanguage('de')">
+                    🇩🇪 Deutsch
+                </button>
+                <button class="lang-button" id="btn-en" onclick="setLanguage('en')">
+                    🇬🇧 English
+                </button>
+                <div class="status" id="status">
+                    Current Language: <strong>de</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="log-container">
+            <h2>📋 Event Log</h2>
+            <div id="log"></div>
+        </div>
+
+        <!-- iFrame (adjust src to your deployment) -->
+        <iframe 
+            id="configurator-iframe" 
+            src="http://localhost:5173"
+            title="UNBREAK Configurator"
+        ></iframe>
+    </div>
+
+    <script>
+        const logEl = document.getElementById('log');
+        const statusEl = document.getElementById('status');
+        let currentLang = 'de';
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('de-DE');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="timestamp">${timestamp}</span>${message}`;
+            logEl.insertBefore(entry, logEl.firstChild);
+            console.log(`[${type.toUpperCase()}]`, message);
+        }
+
+        function updateButtons() {
+            document.getElementById('btn-de').classList.toggle('active', currentLang === 'de');
+            document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+            statusEl.innerHTML = `Current Language: <strong>${currentLang}</strong>`;
+        }
+
+        function setLanguage(lang) {
+            const iframe = document.getElementById('configurator-iframe');
+            
+            // Send UNBREAK_SET_LANG to iframe
+            iframe.contentWindow.postMessage({
+                type: 'UNBREAK_SET_LANG',
+                lang: lang
+            }, 'http://localhost:5173');
+            
+            currentLang = lang;
+            updateButtons();
+            
+            log(`🌍 Sent UNBREAK_SET_LANG: ${lang}`, 'success');
+        }
+
+        // Listen for messages from iframe
+        window.addEventListener('message', (event) => {
+            if (event.origin !== 'http://localhost:5173') {
+                log(`⚠️ Blocked message from unknown origin: ${event.origin}`, 'error');
+                return;
+            }
+
+            const msg = event.data;
+            
+            if (!msg?.type) return;
+
+            // Handle UNBREAK_GET_LANG request from iframe
+            if (msg.type === 'UNBREAK_GET_LANG') {
+                log('📥 Received UNBREAK_GET_LANG request from iframe', 'info');
+                
+                // Respond with current language
+                setTimeout(() => {
+                    setLanguage(currentLang);
+                    log(`📤 Responded with language: ${currentLang}`, 'success');
+                }, 50);
+            }
+            
+            // Handle UNBREAK_LANG_ACK acknowledgment
+            if (msg.type === 'UNBREAK_LANG_ACK') {
+                log(`✅ Received UNBREAK_LANG_ACK: ${msg.lang}`, 'success');
+            }
+            
+            // Handle other messages
+            if (msg.type === 'UNBREAK_CONFIG_READY') {
+                log('✅ Configurator READY', 'success');
+            }
+            
+            if (msg.type === 'configChanged') {
+                log(`📦 Config changed: ${msg.reason || 'update'}`, 'info');
+            }
+        });
+
+        log('🚀 Test page loaded - waiting for iframe...', 'info');
+    </script>
+</body>
+</html>

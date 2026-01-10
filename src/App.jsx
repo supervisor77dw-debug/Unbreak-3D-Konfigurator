@@ -28,13 +28,15 @@ function ConfiguratorContent() {
       lang: language,
     });
 
-    console.log('[App] Checkout Configuration (config_json):', configJSON);
-    console.log('[App] Parent Config Format (with labels):', config);
+    console.info('[App] Add to Cart - Checkout Configuration (config_json):', configJSON);
+    console.info('[App] Add to Cart - Parent Config Format (with labels):', config);
     
     // Send to parent (if in iframe)
     broadcastConfig(config, 'add_to_cart');
     
-    alert(`${t('ui.addToCart')}!\n${t('messages.configSaved')}`);
+    // Production: No UI alerts/popups, only console logging
+    // Parent handles the actual "Add to Cart" confirmation
+    console.info(`[App] ${t('ui.addToCart')} - ${t('messages.configSaved')}`);
   };
 
   const handleResetView = () => {
@@ -66,13 +68,13 @@ function ConfiguratorContent() {
           className="action-button reset-view"
           onClick={handleResetView}
         >
-          🔄 Ansicht zurücksetzen
+          🔄 {t('ui.resetView')}
         </button>
         <button
           className="action-button add-to-cart"
           onClick={handleAddToCart}
         >
-          In den Warenkorb
+          {t('ui.addToCart')}
         </button>
       </PanelHost>
     </div>

@@ -38,12 +38,14 @@ export const translations = {
         // UI Elements
         ui: {
             configure: 'Konfigurieren',
+            configurator: 'Konfigurator',
             selectColor: 'Farbe auswählen',
             next: 'Weiter',
             back: 'Zurück',
             buyNow: 'Jetzt kaufen',
             addToCart: 'In den Warenkorb',
             reset: 'Zurücksetzen',
+            resetView: 'Ansicht zurücksetzen',
             close: 'Schließen',
             finish: 'Oberfläche',
             quantity: 'Anzahl',
@@ -52,6 +54,8 @@ export const translations = {
             price: 'Preis',
             total: 'Gesamt',
             language: 'Sprache',
+            colors: 'Farben',
+            actions: 'Aktionen',
         },
         
         // Messages
@@ -91,12 +95,14 @@ export const translations = {
         // UI Elements
         ui: {
             configure: 'Configure',
+            configurator: 'Configurator',
             selectColor: 'Select Color',
             next: 'Next',
             back: 'Back',
             buyNow: 'Buy Now',
             addToCart: 'Add to Cart',
             reset: 'Reset',
+            resetView: 'Reset View',
             close: 'Close',
             finish: 'Finish',
             quantity: 'Quantity',
@@ -105,6 +111,8 @@ export const translations = {
             price: 'Price',
             total: 'Total',
             language: 'Language',
+            colors: 'Colors',
+            actions: 'Actions',
         },
         
         // Messages
