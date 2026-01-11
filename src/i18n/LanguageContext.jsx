@@ -1,31 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { t as translate } from './translations';
 
 const LanguageContext = createContext();
-
-/**
- * PRODUCTION PARENT ORIGIN (Strict Whitelist)
- */
-const PARENT_ORIGIN = 'https://unbreak-one.vercel.app';
-
-/**
- * Check if origin is allowed (strict production mode)
- */
-const isOriginAllowed = (origin) => {
-    // Production whitelist
-    if (origin === PARENT_ORIGIN) return true;
-    
-    // Local development
-    if (origin === 'http://localhost:3000') return true;
-    if (origin === 'http://localhost:5173') return true;
-    if (origin === 'http://127.0.0.1:3000') return true;
-    if (origin === 'http://127.0.0.1:5173') return true;
-    
-    // Vercel Preview Deployments pattern
-    if (/^https:\/\/unbreak-[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
-    
-    return false;
-};
 
 /**
  * Get language from URL query parameter
@@ -42,172 +18,85 @@ const getLanguageFromURL = () => {
     return null;
 };
 
+/**
+ * Get language from localStorage
+ * @returns {string} 'de' | 'en' | null
+ */
+const getLanguageFromStorage = () => {
+    try {
+        const stored = localStorage.getItem('lang');
+        if (stored === 'de' || stored === 'en') {
+            return stored;
+        }
+    } catch (e) {
+        // localStorage not available
+    }
+    return null;
+};
+
+/**
+ * Save language to localStorage
+ * @param {string} lang - 'de' | 'en'
+ */
+const saveLanguageToStorage = (lang) => {
+    try {
+        localStorage.setItem('lang', lang);
+    } catch (e) {
+        // localStorage not available
+    }
+};
+
+/**
+ * Update URL query parameter (without reload)
+ * @param {string} lang - 'de' | 'en'
+ */
+const updateURLLanguage = (lang) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('lang', lang);
+    window.history.replaceState({}, '', url.toString());
+};
+
 export const LanguageProvider = ({ children }) => {
-    // Start with URL parameter or default 'de'
-    const [language, setLanguage] = useState(() => {
+    // Initialize language from URL -> localStorage -> default 'de'
+    const [language, setLanguageState] = useState(() => {
+        // Priority 1: URL parameter
         const urlLang = getLanguageFromURL();
         if (urlLang) {
-            console.info(`[IFRAME][LANG][INIT] from URL: ${urlLang}`);
+            saveLanguageToStorage(urlLang);
+            console.info('[CONFIG] lang=', urlLang, '(from URL)');
             return urlLang;
         }
-        console.info('[IFRAME][LANG][INIT] default: de, waiting for parent...');
+        
+        // Priority 2: localStorage
+        const storedLang = getLanguageFromStorage();
+        if (storedLang) {
+            console.info('[CONFIG] lang=', storedLang, '(from localStorage)');
+            return storedLang;
+        }
+        
+        // Priority 3: Default
+        console.info('[CONFIG] lang= de (default)');
         return 'de';
     });
 
-    const [hasReceivedLanguage, setHasReceivedLanguage] = useState(false);
-    const [rerenderTick, setRerenderTick] = useState(0);
-    const retryCountRef = useRef(0);
-    const retryTimerRef = useRef(null);
-    const maxRetries = 10;
-
-    // GET_LANG request with retries
-    useEffect(() => {
-        // Skip if we have URL parameter
-        if (getLanguageFromURL()) {
-            setHasReceivedLanguage(true);
-            return;
+    /**
+     * Set language and persist to localStorage + URL
+     * @param {string} newLang - 'de' | 'en'
+     */
+    const setLanguage = (newLang) => {
+        if (newLang === 'de' || newLang === 'en') {
+            setLanguageState(newLang);
+            saveLanguageToStorage(newLang);
+            updateURLLanguage(newLang);
+            console.info('[CONFIG] lang=', newLang);
         }
-
-        // Only in iframe
-        if (window.parent === window) return;
-
-        const correlationId = `lang-init-${Date.now()}`;
-        
-        const sendGetLang = () => {
-            if (hasReceivedLanguage) {
-                // Stop retries if we received language
-                if (retryTimerRef.current) {
-                    clearTimeout(retryTimerRef.current);
-                    retryTimerRef.current = null;
-                }
-                return;
-            }
-
-            retryCountRef.current += 1;
-            const attempt = retryCountRef.current;
-
-            if (attempt > maxRetries) {
-                console.warn('[IFRAME][LANG][RETRY] max retries reached, using default: de');
-                setLanguage('de');
-                setHasReceivedLanguage(true);
-                return;
-            }
-
-            // Log retry
-            if (attempt > 1) {
-                console.warn('[IFRAME][LANG][RETRY]', attempt, correlationId);
-            } else {
-                console.info('[IFRAME][LANG] sent GET_LANG', correlationId);
-            }
-
-            // Send GET_LANG
-            window.parent.postMessage(
-                { type: 'UNBREAK_GET_LANG', correlationId },
-                '*' // Validated on response
-            );
-
-            // Schedule next retry
-            const delay = attempt === 1 ? 500 : 1000; // First retry after 500ms, then 1s
-            retryTimerRef.current = setTimeout(sendGetLang, delay);
-        };
-
-        // Start initial request
-        sendGetLang();
-
-        return () => {
-            if (retryTimerRef.current) {
-                clearTimeout(retryTimerRef.current);
-            }
-        };
-    }, [hasReceivedLanguage]);
-
-    // Listen for UNBREAK_SET_LANG messages from parent window
-    useEffect(() => {
-        const handleMessage = (event) => {
-            if (!event?.data) return;
-            
-            const msg = event.data;
-            const msgType = msg.type || msg.event;
-            
-            // UNBREAK_SET_LANG: External language control
-            if (msgType === 'UNBREAK_SET_LANG' || msgType === 'UNBREAK_SET_LOCALE') {
-                const newLang = msg.lang;
-                const correlationId = msg.correlationId || 'none';
-                
-                console.info('[IFRAME][LANG] received', { lang: newLang, via: msgType, correlationId, origin: event.origin });
-                
-                // Origin validation (STRICT)
-                if (!isOriginAllowed(event.origin)) {
-                    console.warn(`[IFRAME][SECURITY] blocked origin=${event.origin}`);
-                    return;
-                }
-                
-                if (newLang === 'de' || newLang === 'en') {
-                    // Log before/after
-                    const i18nBefore = language;
-                    console.info(`[IFRAME][LANG] i18n.before=${i18nBefore} i18n.after=${newLang}`);
-                    
-                    // Apply language (this triggers React re-render)
-                    setLanguage(newLang);
-                    setHasReceivedLanguage(true);
-                    
-                    // Force re-render via tick
-                    setRerenderTick(prev => {
-                        const next = prev + 1;
-                        console.info(`[IFRAME][LANG] rerenderTick=${next}`);
-                        return next;
-                    });
-                    
-                    console.info(`[IFRAME][LANG] applied`, newLang, correlationId);
-                    
-                    // Send ACK to parent (FIXED TARGET ORIGIN)
-                    const ackPayload = {
-                        type: 'UNBREAK_LANG_ACK',
-                        lang: newLang,
-                        correlationId: correlationId
-                    };
-                    
-                    // Send ACK to production origin (FIXED)
-                    const targetOrigin = 'https://unbreak-one.vercel.app';
-                    window.parent.postMessage(ackPayload, targetOrigin);
-                    console.info(`[IFRAME][ACK_OUT] sent lang=${newLang} correlationId=${correlationId} targetOrigin=${targetOrigin}`);
-                } else {
-                    console.warn(`[IFRAME][LANG] invalid language=${newLang}`);
-                }
-            }
-        };
-        
-        window.addEventListener('message', handleMessage);
-        console.info('[IFRAME][LANG][LISTENER] ready for UNBREAK_SET_LANG');
-        
-        return () => {
-            window.removeEventListener('message', handleMessage);
-        };
-    }, [language]); // Include language in deps to avoid stale closure
-
-    // Register global language setter for external control
-    useEffect(() => {
-        window.__UNBREAK_setLanguage = (lang) => {
-            if (lang === 'de' || lang === 'en') {
-                console.info(`[IFRAME][LANG] changed via global setter: ${lang}`);
-                setLanguage(lang);
-                setRerenderTick(prev => prev + 1);
-                return true;
-            }
-            console.warn(`[IFRAME][LANG] invalid language for global setter: ${lang}`);
-            return false;
-        };
-        
-        return () => {
-            delete window.__UNBREAK_setLanguage;
-        };
-    }, []);
+    };
 
     // Translation helper bound to current language
     const t = (path) => translate(language, path);
 
     return (
-        <LanguageContext.Provider value={{ language, setLanguage, t }} key={`lang-${language}-${rerenderTick}`}>
+        <LanguageContext.Provider value={{ language, setLanguage, t }}>
             {children}
         </LanguageContext.Provider>
     );

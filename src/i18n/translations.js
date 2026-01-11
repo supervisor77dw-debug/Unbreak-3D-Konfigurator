@@ -61,6 +61,7 @@ export const translations = {
             colors: 'Farben',
             actions: 'Aktionen',
             menu: 'Menü öffnen',
+            loading: 'Lädt...',
         },
         
         // Modules
@@ -75,6 +76,7 @@ export const translations = {
             configSaved: 'Konfiguration gespeichert',
             errorLoading: 'Fehler beim Laden',
             pleaseWait: 'Bitte warten...',
+            errorAddToCart: 'Ups – bitte erneut versuchen',
         },
     },
     
@@ -130,6 +132,7 @@ export const translations = {
             colors: 'Colors',
             actions: 'Actions',
             menu: 'Open menu',
+            loading: 'Loading...',
         },
         
         // Modules
@@ -144,6 +147,7 @@ export const translations = {
             configSaved: 'Configuration saved',
             errorLoading: 'Error loading',
             pleaseWait: 'Please wait...',
+            errorAddToCart: 'Oops – please try again',
         },
     },
 };

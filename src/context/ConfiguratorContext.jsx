@@ -1,6 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { broadcastConfig, initConfigurationListener } from '../utils/iframeBridge';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const ConfiguratorContext = createContext();
 
@@ -153,17 +152,7 @@ export const ConfiguratorProvider = ({ children }) => {
         
         // Update state
         setColors(nextColors);
-        
-        // Build and broadcast config with NEXT values (no stale closure)
-        const config = buildConfig({
-            nextVariant: variant,
-            nextColors: nextColors,
-            nextFinish: finish,
-            nextQty: quantity,
-        });
-        
-        broadcastConfig(config, `color_changed:${part}=${colorName}`);
-    }, [colors, finish, quantity, variant]);
+    }, [colors]);
 
     /**
      * Update variant and broadcast change to parent
@@ -172,17 +161,7 @@ export const ConfiguratorProvider = ({ children }) => {
     const updateVariant = useCallback((newVariant) => {
         // Update state
         setVariant(newVariant);
-        
-        // Build and broadcast config with NEXT variant
-        const config = buildConfig({
-            nextVariant: newVariant,
-            nextColors: colors,
-            nextFinish: finish,
-            nextQty: quantity,
-        });
-        
-        broadcastConfig(config, `variant_changed:${newVariant}`);
-    }, [colors, finish, quantity]);
+    }, []);
 
     /**
      * Update finish and broadcast change to parent
@@ -191,17 +170,7 @@ export const ConfiguratorProvider = ({ children }) => {
     const updateFinish = useCallback((newFinish) => {
         // Update state
         setFinish(newFinish);
-        
-        // Build and broadcast config with NEXT finish
-        const config = buildConfig({
-            nextVariant: variant,
-            nextColors: colors,
-            nextFinish: newFinish,
-            nextQty: quantity,
-        });
-        
-        broadcastConfig(config, `finish_changed:${newFinish}`);
-    }, [colors, quantity, variant]);
+    }, []);
 
     /**
      * Update quantity and broadcast change to parent
@@ -210,38 +179,7 @@ export const ConfiguratorProvider = ({ children }) => {
     const updateQuantity = useCallback((newQuantity) => {
         // Update state
         setQuantity(newQuantity);
-        
-        // Build and broadcast config with NEXT quantity
-        const config = buildConfig({
-            nextVariant: variant,
-            nextColors: colors,
-            nextFinish: finish,
-            nextQty: newQuantity,
-        });
-        
-        broadcastConfig(config, `quantity_changed:${newQuantity}`);
-    }, [colors, finish, variant]);
-
-    // Initialize GET_CONFIGURATION listener on mount
-    useEffect(() => {
-        console.info('[ConfiguratorContext] Initializing GET_CONFIGURATION listener');
-        const cleanup = initConfigurationListener(getCurrentConfig);
-        
-        return cleanup;
-    }, [getCurrentConfig]);
-
-    // Broadcast initial configuration on mount
-    useEffect(() => {
-        const initialConfig = buildConfig({
-            nextVariant: variant,
-            nextColors: colors,
-            nextFinish: finish,
-            nextQty: quantity,
-        });
-        
-        broadcastConfig(initialConfig, 'initial_config');
-        console.info('[ConfiguratorContext] Initial config broadcasted to parent');
-    }, []); // Only run once on mount
+    }, []);
 
     return (
         <ConfiguratorContext.Provider

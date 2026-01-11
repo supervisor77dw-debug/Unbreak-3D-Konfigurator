@@ -3,60 +3,107 @@ import { ConfiguratorProvider, buildConfigJSON } from './context/ConfiguratorCon
 import Scene from './components/3D/Scene';
 import TopBar from './components/UI/TopBar';
 import PanelHost from './components/UI/PanelHost';
-import { notifyLoading, initTimeoutFallback, broadcastConfig } from './utils/iframeBridge';
 import { useConfigurator } from './context/ConfiguratorContext';
 import { useLanguage } from './i18n/LanguageContext';
 import './index.css';
 
-// ============================================
-// BUILD INFORMATION
-// ============================================
-const BUILD_DATE = '2026-01-11T15:30:00Z';
-const BUILD_COMMIT = '9792771';
-console.info('[IFRAME][BUILD]', BUILD_DATE, 'commit:', BUILD_COMMIT);
-
-// ============================================
-// GLOBAL MESSAGE INSTRUMENTATION (DEBUG)
-// ============================================
-if (typeof window !== 'undefined') {
-  window.addEventListener('message', (event) => {
-    if (!event?.data) return;
-    
-    const d = event.data;
-    const msgType = d.type || d.event || 'unknown';
-    console.info('[IFRAME][MSG_IN]', { origin: event.origin, type: msgType, d });
-  }, true); // Capture phase to log BEFORE other listeners
-}
+/**
+ * Get return URL from query parameter
+ * @returns {string} Return URL or default shop URL
+ */
+const getReturnURL = () => {
+  const params = new URLSearchParams(window.location.search);
+  const returnParam = params.get('return');
+  
+  if (returnParam) {
+    try {
+      // Validate URL
+      new URL(returnParam);
+      return returnParam;
+    } catch (e) {
+      console.error('[CONFIG] Invalid return URL:', returnParam);
+    }
+  }
+  
+  // Default return URL
+  return 'https://www.unbreak-one.com/shop';
+};
 
 function ConfiguratorContent() {
   const { variant, setVariant, colors, finish, quantity, getCurrentConfig } = useConfigurator();
   const { t, language } = useLanguage();
   const [activePanel, setActivePanel] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // NOTE: Initial config broadcast is now handled in ConfiguratorContext useEffect
-  // No duplicate broadcast needed here
+  const handleAddToCart = async () => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Build configuration JSON
+      const config = getCurrentConfig();
+      const configJSON = buildConfigJSON({
+        nextVariant: variant,
+        nextColors: colors,
+        nextFinish: finish,
+        nextQty: quantity,
+        lang: language,
+      });
 
-  const handleAddToCart = () => {
-    const config = getCurrentConfig();
-    
-    // Build backend-compatible config_json (technical keys only)
-    const configJSON = buildConfigJSON({
-      nextVariant: variant,
-      nextColors: colors,
-      nextFinish: finish,
-      nextQty: quantity,
-      lang: language,
-    });
+      // Prepare payload for API
+      const payload = {
+        lang: language,
+        variantKey: variant,
+        product_sku: config.product_sku,
+        config: configJSON,
+        meta: {
+          source: 'config-app',
+          ts: Date.now(),
+          version: config.config_version || '1.0.0'
+        }
+      };
 
-    console.info('[App] Add to Cart - Checkout Configuration (config_json):', configJSON);
-    console.info('[App] Add to Cart - Parent Config Format (with labels):', config);
-    
-    // Send to parent (if in iframe)
-    broadcastConfig(config, 'add_to_cart');
-    
-    // Production: No UI alerts/popups, only console logging
-    // Parent handles the actual "Add to Cart" confirmation
-    console.info(`[App] ${t('ui.addToCart')} - ${t('messages.configSaved')}`);
+      console.info('[CONFIG] posting config-session');
+
+      // POST to config-session API
+      const response = await fetch('https://www.unbreak-one.com/api/config-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        credentials: 'omit',
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const cfgId = data.cfgId;
+
+      if (!cfgId) {
+        throw new Error('No cfgId in response');
+      }
+
+      console.info('[CONFIG] cfgId=', cfgId);
+
+      // Get return URL
+      const returnUrl = getReturnURL();
+      const separator = returnUrl.includes('?') ? '&' : '?';
+      const redirectUrl = `${returnUrl}${separator}cfgId=${encodeURIComponent(cfgId)}`;
+
+      // Redirect to shop
+      window.location.href = redirectUrl;
+      
+    } catch (error) {
+      console.error('[CONFIG] Add to cart error:', error);
+      setIsSubmitting(false);
+      
+      // User-friendly error message
+      alert(t('messages.errorAddToCart') || 'Ups – bitte erneut versuchen');
+    }
   };
 
   const handleResetView = () => {
@@ -93,8 +140,9 @@ function ConfiguratorContent() {
         <button
           className="action-button add-to-cart"
           onClick={handleAddToCart}
+          disabled={isSubmitting}
         >
-          {t('ui.addToCart')}
+          {isSubmitting ? t('ui.loading') || 'Lädt...' : t('ui.addToCart')}
         </button>
       </PanelHost>
     </div>
