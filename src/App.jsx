@@ -150,14 +150,13 @@ function ConfiguratorContent() {
 }
 
 function App() {
-  // Send LOADING signal on mount and setup timeout fallback
+  // Log build stamp on mount
   useEffect(() => {
-    notifyLoading(0);
-    console.log('[App] Sent LOADING signal to parent');
-    
-    // Setup 12s timeout fallback
-    const cleanup = initTimeoutFallback(12000);
-    return cleanup;
+    console.info('[BUILD]', {
+      app: 'config',
+      commit: 'crashfix-notifyLoading',
+      time: new Date().toISOString(),
+    });
   }, []);
 
   return (
