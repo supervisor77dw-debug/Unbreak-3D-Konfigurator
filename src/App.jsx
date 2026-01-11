@@ -7,57 +7,102 @@ import { useConfigurator } from './context/ConfiguratorContext';
 import { useLanguage } from './i18n/LanguageContext';
 import './index.css';
 
+/**
+ * Generate session ID (UUID v4)
+ */
+const generateSessionId = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
+/**
+ * Parse URL parameters
+ */
+const getURLParams = () => {
+  const params = new URLSearchParams(window.location.search);
+  const lang = params.get('lang') || 'de';
+  const session = params.get('session') || generateSessionId();
+  const returnUrl = params.get('return') || 'https://www.unbreak-one.com/shop/config-return';
+  
+  return { lang, session, returnUrl };
+};
+
 function ConfiguratorContent() {
-  const { variant, setVariant, colors, finish, quantity, getCurrentConfig } = useConfigurator();
+  const { variant, setVariant, colors, finish, quantity } = useConfigurator();
   const { t, language } = useLanguage();
   const [activePanel, setActivePanel] = useState(null);
-  const [showExport, setShowExport] = useState(false);
-  const [exportData, setExportData] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [urlParams] = useState(() => getURLParams());
 
-  const handleExport = () => {
-    // Build configuration JSON
-    const config = getCurrentConfig();
-    const configJSON = buildConfigJSON({
-      nextVariant: variant,
-      nextColors: colors,
-      nextFinish: finish,
-      nextQty: quantity,
-      lang: language,
+  // Log initialization
+  useEffect(() => {
+    console.info('[CFG] init', {
+      sessionId: urlParams.session,
+      lang: urlParams.lang,
+      return: urlParams.returnUrl
     });
+  }, [urlParams]);
 
-    // Create export payload
-    const payload = {
-      variantKey: variant,
-      lang: language,
-      payload: {
-        colors: configJSON.base ? {
-          base: configJSON.base,
-          arm: configJSON.arm,
-          module: configJSON.module,
-          pattern: configJSON.pattern
-        } : {
-          base: configJSON.base,
-          pattern: configJSON.pattern
-        },
-        finish: configJSON.finish,
-        quantity: configJSON.quantity
-      }
-    };
-
-    console.info('[CONFIG][EXPORT] payload', payload);
+  const handleSaveAndReturn = async () => {
+    if (isSaving) return;
     
-    setExportData(payload);
-    setShowExport(true);
-  };
+    setIsSaving(true);
+    
+    try {
+      // Build configuration JSON
+      const configJSON = buildConfigJSON({
+        nextVariant: variant,
+        nextColors: colors,
+        nextFinish: finish,
+        nextQty: quantity,
+        lang: language,
+      });
 
-  const handleCopyToClipboard = () => {
-    const jsonString = JSON.stringify(exportData, null, 2);
-    navigator.clipboard.writeText(jsonString).then(() => {
-      console.info('[CONFIG][EXPORT] copied to clipboard');
-      alert(t('messages.exportCopied') || 'Konfiguration kopiert!');
-    }).catch(() => {
-      console.error('[CONFIG][EXPORT] clipboard copy failed');
-    });
+      // Prepare payload for API
+      const payload = {
+        sessionId: urlParams.session,
+        lang: language,
+        config: configJSON
+      };
+
+      // POST to config-session API
+      const response = await fetch('https://www.unbreak-one.com/api/config-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        credentials: 'omit',
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.ok) {
+        throw new Error('Session save failed');
+      }
+
+      console.info('[CFG] saved session', { sessionId: urlParams.session });
+
+      // Redirect to shop with session ID
+      const separator = urlParams.returnUrl.includes('?') ? '&' : '?';
+      const redirectUrl = `${urlParams.returnUrl}${separator}session=${encodeURIComponent(urlParams.session)}`;
+      
+      window.location.href = redirectUrl;
+      
+    } catch (error) {
+      console.error('[CFG] save failed', error);
+      setIsSaving(false);
+      
+      // User-friendly error message
+      alert(t('messages.errorAddToCart') || 'Ups – bitte erneut versuchen');
+    }
   };
 
   const handleResetView = () => {
@@ -93,10 +138,10 @@ function ConfiguratorContent() {
         </button>
         <button
           className="action-button add-to-cart"
-          onClick={handleAddToCart}
-          disabled={isSubmitting}
+          onClick={handleSaveAndReturn}
+          disabled={isSaving}
         >
-          {isSubmitting ? t('ui.loading') || 'Lädt...' : t('ui.addToCart')}
+          {isSaving ? t('ui.loading') || 'Lädt...' : t('ui.addToCart')}
         </button>
       </PanelHost>
     </div>
@@ -104,16 +149,6 @@ function ConfiguratorContent() {
 }
 
 function App() {
-  // Log build stamp on mount
-  useEffect(() => {
-    console.info('[BUILD]', {
-      app: 'config',
-      env: import.meta.env.MODE, // 'development' | 'production'
-      commit: import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA || 'local',
-      time: new Date().toISOString(),
-    });
-  }, []);
-
   return (
     <ConfiguratorProvider>
       <ConfiguratorContent />
@@ -122,27 +157,3 @@ function App() {
 }
 
 export default App;
-export-config"
-          onClick={handleExport}
-        >
-          💾 {t('ui.saveConfig') || 'Konfiguration speichern'}
-        </button>
-      </PanelHost>
-
-      {/* Export Modal */}
-      {showExport && (
-        <div className="export-modal-overlay" onClick={() => setShowExport(false)}>
-          <div className="export-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{t('ui.exportTitle') || 'Konfiguration'}</h3>
-            <pre className="export-json">{JSON.stringify(exportData, null, 2)}</pre>
-            <div className="export-actions">
-              <button onClick={handleCopyToClipboard}>
-                📋 {t('ui.copyToClipboard') || 'Kopieren'}
-              </button>
-              <button onClick={() => setShowExport(false)}>
-                ✕ {t('ui.close') || 'Schließen'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
