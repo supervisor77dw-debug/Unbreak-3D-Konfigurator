@@ -65,6 +65,7 @@ export const translations = {
             saveConfig: 'Konfiguration speichern',
             exportTitle: 'Konfiguration',
             copyToClipboard: 'Kopieren',
+            backToShop: 'Zurück zum Shop',
         },
         
         // Modules
@@ -135,9 +136,12 @@ export const translations = {
             language: 'Language',
             colors: 'Colors',
             actions: 'Actions',
-            menu: 'Open menu',            saveConfig: 'Save Configuration',
+            menu: 'Open Menu',
+            loading: 'Loading...',
+            saveConfig: 'Save Configuration',
             exportTitle: 'Configuration',
-            copyToClipboard: 'Copy',            loading: 'Loading...',
+            copyToClipboard: 'Copy',
+            backToShop: 'Back to Shop',
         },
         
         // Modules

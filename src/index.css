@@ -249,6 +249,77 @@ button:focus-visible {
   }
 }
 
+/* Error Banner */
+.error-banner {
+  position: fixed;
+  top: 60px; /* Below TopBar */
+  left: 0;
+  right: 0;
+  background: rgba(231, 76, 60, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 100;
+  animation: slideDown 0.3s ease;
+}
+
+.error-content {
+  max-width: 100%;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.error-back-btn,
+.error-close-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.error-back-btn:hover,
+.error-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.error-close-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

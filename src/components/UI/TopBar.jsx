@@ -2,19 +2,32 @@ import React from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './TopBar.module.css';
 
-const TopBar = ({ activePanel, onPanelToggle, variant, setVariant }) => {
+const TopBar = ({ activePanel, onPanelToggle, variant, setVariant, returnUrl }) => {
     const { t } = useLanguage();
     const handlePanelClick = (panel) => {
         onPanelToggle(activePanel === panel ? null : panel);
     };
 
+    const handleBackToShop = () => {
+        window.location.href = returnUrl || 'https://www.unbreak-one.com/shop';
+    };
+
     return (
         <header className={styles.topBar}>
             <div className={styles.container}>
-                {/* Brand */}
-                <div className={styles.brand}>
-                    <h1 className={styles.brandName}>UNBREAK ONE</h1>
-                    <span className={styles.brandSub}>{t('ui.configurator')}</span>
+                {/* Brand + Back Button */}
+                <div className={styles.brandSection}>
+                    <div className={styles.brand}>
+                        <h1 className={styles.brandName}>UNBREAK ONE</h1>
+                        <span className={styles.brandSub}>{t('ui.configurator')}</span>
+                    </div>
+                    <button
+                        className={styles.backBtn}
+                        onClick={handleBackToShop}
+                        title={t('ui.backToShop') || 'Zurück zum Shop'}
+                    >
+                        ← {t('ui.backToShop') || 'Zurück zum Shop'}
+                    </button>
                 </div>
 
                 {/* Product Variant Toggle */}

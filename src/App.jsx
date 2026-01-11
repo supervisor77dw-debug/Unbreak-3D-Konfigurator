@@ -35,6 +35,7 @@ function ConfiguratorContent() {
   const { t, language } = useLanguage();
   const [activePanel, setActivePanel] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [urlParams] = useState(() => getURLParams());
 
   // Log initialization
@@ -49,6 +50,7 @@ function ConfiguratorContent() {
   const handleSaveAndReturn = async () => {
     if (isSaving) return;
     
+    setSaveError(null); // Clear previous errors
     setIsSaving(true);
     
     try {
@@ -99,9 +101,7 @@ function ConfiguratorContent() {
     } catch (error) {
       console.error('[CFG] save failed', error);
       setIsSaving(false);
-      
-      // User-friendly error message
-      alert(t('messages.errorAddToCart') || 'Ups – bitte erneut versuchen');
+      setSaveError(error.message || 'Speichern fehlgeschlagen');
     }
   };
 
@@ -118,8 +118,32 @@ function ConfiguratorContent() {
         onPanelToggle={setActivePanel}
         variant={variant}
         setVariant={setVariant}
+        returnUrl={urlParams.returnUrl}
       />
       
+      {/* Error Banner */}
+      {saveError && (
+        <div className="error-banner">
+          <div className="error-content">
+            <span className="error-icon">⚠️</span>
+            <span className="error-text">
+              {t('messages.errorAddToCart') || 'Speichern fehlgeschlagen'}: {saveError}
+            </span>
+            <button
+              className="error-back-btn"
+              onClick={() => window.location.href = urlParams.returnUrl}
+            >
+              {t('ui.backToShop') || 'Zurück zum Shop'}
+            </button>
+            <button
+              className="error-close-btn"
+              onClick={() => setSaveError(null)}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       <div className="canvas-wrapper">
         <Scene />
       </div>

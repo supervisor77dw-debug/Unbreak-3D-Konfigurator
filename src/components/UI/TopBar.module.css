@@ -24,6 +24,12 @@
 }
 
 /* Brand Section */
+.brandSection {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
 .brand {
     display: flex;
     align-items: baseline;
@@ -44,6 +50,26 @@
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* Back to Shop Button */
+.backBtn {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.backBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--unbreak-cyan);
+    color: var(--unbreak-cyan);
+    transform: translateX(-2px);
 }
 
 /* Variant Toggle */
