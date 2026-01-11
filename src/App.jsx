@@ -22,8 +22,9 @@ if (typeof window !== 'undefined') {
   window.addEventListener('message', (event) => {
     if (!event?.data) return;
     
-    const msgType = event.data?.type || event.data?.event || 'unknown';
-    console.info('[IFRAME][MSG_IN]', { origin: event.origin, msgType, data: event.data });
+    const d = event.data;
+    const msgType = d.type || d.event || 'unknown';
+    console.info('[IFRAME][MSG_IN]', { origin: event.origin, type: msgType, d });
   }, true); // Capture phase to log BEFORE other listeners
 }
 

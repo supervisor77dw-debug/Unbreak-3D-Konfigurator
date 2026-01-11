@@ -132,14 +132,15 @@ export const LanguageProvider = ({ children }) => {
             // UNBREAK_SET_LANG: External language control
             if (msgType === 'UNBREAK_SET_LANG' || msgType === 'UNBREAK_SET_LOCALE') {
                 const newLang = msg.lang;
+                const correlationId = msg.correlationId || 'none';
+                
+                console.info('[IFRAME][LANG] received', { lang: newLang, via: msgType, correlationId, origin: event.origin });
                 
                 // Origin validation (STRICT)
                 if (!isOriginAllowed(event.origin)) {
                     console.warn(`[IFRAME][SECURITY] blocked origin=${event.origin}`);
                     return;
                 }
-                
-                console.info(`[IFRAME][LANG] received lang=${newLang} via ${msgType}`);
                 
                 if (newLang === 'de' || newLang === 'en') {
                     // Log before/after
@@ -157,18 +158,19 @@ export const LanguageProvider = ({ children }) => {
                         return next;
                     });
                     
-                    console.info(`[IFRAME][LANG] applied lang=${newLang}`);
+                    console.info(`[IFRAME][LANG] applied`, newLang, correlationId);
                     
-                    // Send ACK to parent (ALWAYS) - use event.origin as targetOrigin
+                    // Send ACK to parent (FIXED TARGET ORIGIN)
                     const ackPayload = {
                         type: 'UNBREAK_LANG_ACK',
                         lang: newLang,
-                        ...(msg.correlationId && { correlationId: msg.correlationId })
+                        correlationId: correlationId
                     };
                     
-                    // Send ACK with exact origin (no wildcard)
-                    event.source?.postMessage(ackPayload, event.origin);
-                    console.info(`[IFRAME][ACK_OUT] sent lang=${newLang} targetOrigin=${event.origin}`);
+                    // Send ACK to production origin (FIXED)
+                    const targetOrigin = 'https://unbreak-one.vercel.app';
+                    window.parent.postMessage(ackPayload, targetOrigin);
+                    console.info(`[IFRAME][ACK_OUT] sent lang=${newLang} correlationId=${correlationId} targetOrigin=${targetOrigin}`);
                 } else {
                     console.warn(`[IFRAME][LANG] invalid language=${newLang}`);
                 }
