@@ -154,7 +154,8 @@ function App() {
   useEffect(() => {
     console.info('[BUILD]', {
       app: 'config',
-      commit: 'crashfix-notifyLoading',
+      env: import.meta.env.MODE, // 'development' | 'production'
+      commit: import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA || 'local',
       time: new Date().toISOString(),
     });
   }, []);
