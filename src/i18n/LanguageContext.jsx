@@ -88,7 +88,7 @@ export const LanguageProvider = ({ children }) => {
             setLanguageState(newLang);
             saveLanguageToStorage(newLang);
             updateURLLanguage(newLang);
-            console.info('[CONFIG] lang=', newLang);
+            console.info('[CONFIG][LANG] switched to:', newLang);
         }
     };
 

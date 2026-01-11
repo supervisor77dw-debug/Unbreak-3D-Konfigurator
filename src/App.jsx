@@ -7,103 +7,57 @@ import { useConfigurator } from './context/ConfiguratorContext';
 import { useLanguage } from './i18n/LanguageContext';
 import './index.css';
 
-/**
- * Get return URL from query parameter
- * @returns {string} Return URL or default shop URL
- */
-const getReturnURL = () => {
-  const params = new URLSearchParams(window.location.search);
-  const returnParam = params.get('return');
-  
-  if (returnParam) {
-    try {
-      // Validate URL
-      new URL(returnParam);
-      return returnParam;
-    } catch (e) {
-      console.error('[CONFIG] Invalid return URL:', returnParam);
-    }
-  }
-  
-  // Default return URL
-  return 'https://www.unbreak-one.com/shop';
-};
-
 function ConfiguratorContent() {
   const { variant, setVariant, colors, finish, quantity, getCurrentConfig } = useConfigurator();
   const { t, language } = useLanguage();
   const [activePanel, setActivePanel] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [exportData, setExportData] = useState(null);
 
-  const handleAddToCart = async () => {
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Build configuration JSON
-      const config = getCurrentConfig();
-      const configJSON = buildConfigJSON({
-        nextVariant: variant,
-        nextColors: colors,
-        nextFinish: finish,
-        nextQty: quantity,
-        lang: language,
-      });
+  const handleExport = () => {
+    // Build configuration JSON
+    const config = getCurrentConfig();
+    const configJSON = buildConfigJSON({
+      nextVariant: variant,
+      nextColors: colors,
+      nextFinish: finish,
+      nextQty: quantity,
+      lang: language,
+    });
 
-      // Prepare payload for API
-      const payload = {
-        lang: language,
-        variantKey: variant,
-        product_sku: config.product_sku,
-        config: configJSON,
-        meta: {
-          source: 'config-app',
-          ts: Date.now(),
-          version: config.config_version || '1.0.0'
-        }
-      };
-
-      console.info('[CONFIG] posting config-session');
-
-      // POST to config-session API
-      const response = await fetch('https://www.unbreak-one.com/api/config-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    // Create export payload
+    const payload = {
+      variantKey: variant,
+      lang: language,
+      payload: {
+        colors: configJSON.base ? {
+          base: configJSON.base,
+          arm: configJSON.arm,
+          module: configJSON.module,
+          pattern: configJSON.pattern
+        } : {
+          base: configJSON.base,
+          pattern: configJSON.pattern
         },
-        body: JSON.stringify(payload),
-        credentials: 'omit',
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        finish: configJSON.finish,
+        quantity: configJSON.quantity
       }
+    };
 
-      const data = await response.json();
-      const cfgId = data.cfgId;
+    console.info('[CONFIG][EXPORT] payload', payload);
+    
+    setExportData(payload);
+    setShowExport(true);
+  };
 
-      if (!cfgId) {
-        throw new Error('No cfgId in response');
-      }
-
-      console.info('[CONFIG] cfgId=', cfgId);
-
-      // Get return URL
-      const returnUrl = getReturnURL();
-      const separator = returnUrl.includes('?') ? '&' : '?';
-      const redirectUrl = `${returnUrl}${separator}cfgId=${encodeURIComponent(cfgId)}`;
-
-      // Redirect to shop
-      window.location.href = redirectUrl;
-      
-    } catch (error) {
-      console.error('[CONFIG] Add to cart error:', error);
-      setIsSubmitting(false);
-      
-      // User-friendly error message
-      alert(t('messages.errorAddToCart') || 'Ups – bitte erneut versuchen');
-    }
+  const handleCopyToClipboard = () => {
+    const jsonString = JSON.stringify(exportData, null, 2);
+    navigator.clipboard.writeText(jsonString).then(() => {
+      console.info('[CONFIG][EXPORT] copied to clipboard');
+      alert(t('messages.exportCopied') || 'Konfiguration kopiert!');
+    }).catch(() => {
+      console.error('[CONFIG][EXPORT] clipboard copy failed');
+    });
   };
 
   const handleResetView = () => {
@@ -168,3 +122,27 @@ function App() {
 }
 
 export default App;
+export-config"
+          onClick={handleExport}
+        >
+          💾 {t('ui.saveConfig') || 'Konfiguration speichern'}
+        </button>
+      </PanelHost>
+
+      {/* Export Modal */}
+      {showExport && (
+        <div className="export-modal-overlay" onClick={() => setShowExport(false)}>
+          <div className="export-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{t('ui.exportTitle') || 'Konfiguration'}</h3>
+            <pre className="export-json">{JSON.stringify(exportData, null, 2)}</pre>
+            <div className="export-actions">
+              <button onClick={handleCopyToClipboard}>
+                📋 {t('ui.copyToClipboard') || 'Kopieren'}
+              </button>
+              <button onClick={() => setShowExport(false)}>
+                ✕ {t('ui.close') || 'Schließen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}

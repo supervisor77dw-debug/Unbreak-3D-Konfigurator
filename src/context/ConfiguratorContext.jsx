@@ -152,6 +152,9 @@ export const ConfiguratorProvider = ({ children }) => {
         
         // Update state
         setColors(nextColors);
+        
+        // Log color change
+        console.info('[CONFIG][COLOR] changed', { part, color: colorName });
     }, [colors]);
 
     /**

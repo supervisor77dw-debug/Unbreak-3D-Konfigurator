@@ -1,10 +1,9 @@
-// [SYNC 2025-12-24] Added Auto-Fit Camera to Model + iframe Bridge
+// [SYNC 2025-12-24] Added Auto-Fit Camera to Model
 import React, { useRef, useMemo, useEffect } from 'react';
 import { useConfigurator } from '../../context/ConfiguratorContext';
 import { useGLTF } from '@react-three/drei';
 import { useThree, useFrame } from '@react-three/fiber';
 import { getObfuscatedScale, obfuscateGeometry } from '../../utils/obfuscation';
-import { notifyReady } from '../../utils/iframeBridge';
 import { isDebugUIEnabled } from '../../config/debug';
 import * as THREE from 'three';
 
@@ -107,13 +106,6 @@ const fitCameraToObject = (camera, object, controls, margin = 1.6, animate = fal
         controls.update();
     }
 
-    // Debug logging (once)
-    console.log('[FitCamera] Bbox size:', size);
-    console.log('[FitCamera] Radius:', radius.toFixed(3), '| Margin:', margin, '| Dolly: 1.45x (unified)');
-    console.log('[FitCamera] Distance:', distance.toFixed(3));
-    console.log('[FitCamera] Center:', center);
-    console.log('[FitCamera] CamPos:', camera.position.toArray().map(v => v.toFixed(2)));
-    
     return { distance, center };
 };
 
@@ -262,8 +254,7 @@ const ConfiguratorModel = () => {
             document.body.appendChild(debugDiv);
         }
         
-        console.log('[U1] ✅ UNIFIED FRAMING v2: scale=0.6, fitMargin=1.6, dolly=1.45x for ALL devices');
-        console.log('[U1] Build timestamp:', Date.now(), '- If you see old values, clear browser cache!');
+        // Unified framing configured: scale=0.6, fitMargin=1.6, dolly=1.45x
     }, []);
 
     // Auto-fit camera when variant changes or on initial load
@@ -271,7 +262,7 @@ const ConfiguratorModel = () => {
         if (group.current && camera && controls) {
             // Prevent double-fits: only fit if variant changed
             if (lastFitVariant.current === variant && hasFittedCamera.current) {
-                console.log('[U1] FIT SKIPPED - variant unchanged:', variant);
+                // Fit skipped - variant unchanged
                 return;
             }
             
@@ -299,16 +290,6 @@ const ConfiguratorModel = () => {
                 // Calculate camera distance to center for debug
                 const camDist = camera.position.distanceTo(result.center);
                 
-                // Log fit run
-                console.log('[U1] FIT RUN', {
-                    variantKey: variant,
-                    fitMargin,
-                    dolly: '1.45x (unified)',
-                    distance: result.distance.toFixed(3),
-                    camDist: camDist.toFixed(3),
-                    fitCount: fitRunCount.current
-                });
-                
                 // Update debug overlay
                 if (window.__u1_updateDebug) {
                     window.__u1_updateDebug(result.distance, camDist);
@@ -320,9 +301,8 @@ const ConfiguratorModel = () => {
                     requestAnimationFrame(() => {
                         // Wait for 1 additional frame to ensure rendering is complete
                         requestAnimationFrame(() => {
-                            notifyReady('1.0.0');
+                            console.info('[CONFIG] 3D model ready');
                             hasNotifiedReady.current = true;
-                            console.log('[ConfiguratorModel] READY signal sent to parent window');
                         });
                     });
                 }
@@ -347,7 +327,7 @@ const ConfiguratorModel = () => {
                 window.__u1_fitRunCount = fitRunCount.current;
                 
                 const camDist = camera.position.distanceTo(result.center);
-                console.log('[U1] RESET VIEW', { fitMargin, dolly: '1.45x', distance: result.distance.toFixed(3), camDist: camDist.toFixed(3) });
+                // View reset
                 
                 if (window.__u1_updateDebug) {
                     window.__u1_updateDebug(result.distance, camDist);

@@ -62,6 +62,9 @@ export const translations = {
             actions: 'Aktionen',
             menu: 'Menü öffnen',
             loading: 'Lädt...',
+            saveConfig: 'Konfiguration speichern',
+            exportTitle: 'Konfiguration',
+            copyToClipboard: 'Kopieren',
         },
         
         // Modules
@@ -74,6 +77,7 @@ export const translations = {
         // Messages
         messages: {
             configSaved: 'Konfiguration gespeichert',
+            exportCopied: 'Konfiguration kopiert!',
             errorLoading: 'Fehler beim Laden',
             pleaseWait: 'Bitte warten...',
             errorAddToCart: 'Ups – bitte erneut versuchen',
@@ -131,8 +135,9 @@ export const translations = {
             language: 'Language',
             colors: 'Colors',
             actions: 'Actions',
-            menu: 'Open menu',
-            loading: 'Loading...',
+            menu: 'Open menu',            saveConfig: 'Save Configuration',
+            exportTitle: 'Configuration',
+            copyToClipboard: 'Copy',            loading: 'Loading...',
         },
         
         // Modules
@@ -148,6 +153,7 @@ export const translations = {
             errorLoading: 'Error loading',
             pleaseWait: 'Please wait...',
             errorAddToCart: 'Oops – please try again',
+            exportCopied: 'Configuration copied!',
         },
     },
 };
