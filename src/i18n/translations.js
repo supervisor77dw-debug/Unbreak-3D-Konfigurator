@@ -39,6 +39,10 @@ export const translations = {
         ui: {
             configure: 'Konfigurieren',
             configurator: 'Konfigurator',
+            productVariant: 'Produktvariante',
+            colorSelection: 'Farbauswahl',
+            glassVariant: 'Glasvariante',
+            bottleHolderInfo: 'Der Flaschenhalter wird in edlem Matt-Schwarz geliefert. Die integrierte Windrose kann farblich angepasst werden.',
             selectColor: 'Farbe auswählen',
             next: 'Weiter',
             back: 'Zurück',
@@ -56,6 +60,14 @@ export const translations = {
             language: 'Sprache',
             colors: 'Farben',
             actions: 'Aktionen',
+            menu: 'Menü öffnen',
+        },
+        
+        // Modules
+        modules: {
+            wine: 'Weinglas-Halter',
+            champagne: 'Champagner-Halter',
+            rubber: 'Gummi-Aufsatz',
         },
         
         // Messages
@@ -96,6 +108,10 @@ export const translations = {
         ui: {
             configure: 'Configure',
             configurator: 'Configurator',
+            productVariant: 'Product Variant',
+            colorSelection: 'Color Selection',
+            glassVariant: 'Glass Variant',
+            bottleHolderInfo: 'The bottle holder comes in elegant matte black. The integrated wind rose can be customized in color.',
             selectColor: 'Select Color',
             next: 'Next',
             back: 'Back',
@@ -113,6 +129,14 @@ export const translations = {
             language: 'Language',
             colors: 'Colors',
             actions: 'Actions',
+            menu: 'Open menu',
+        },
+        
+        // Modules
+        modules: {
+            wine: 'Wine Glass Holder',
+            champagne: 'Champagne Holder',
+            rubber: 'Rubber Insert',
         },
         
         // Messages

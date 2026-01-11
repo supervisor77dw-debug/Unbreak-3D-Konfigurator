@@ -31,12 +31,17 @@ export const LanguageProvider = ({ children }) => {
     });
 
     const [hasReceivedLanguage, setHasReceivedLanguage] = useState(false);
+    const [rerenderTick, setRerenderTick] = useState(0);
 
     // ALLOWED ORIGINS for language control (same as iframeBridge)
     const ALLOWED_ORIGINS = [
         'https://unbreak-one.vercel.app',
+        'https://www.unbreak-one.com',
+        'https://unbreak-one.com',
         'http://localhost:3000',
         'http://localhost:5173',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:5173',
     ];
 
     // Check if origin matches allowed pattern
@@ -84,31 +89,45 @@ export const LanguageProvider = ({ children }) => {
             const msg = event.data;
             
             // UNBREAK_SET_LANG: External language control
-            if (msg.type === 'UNBREAK_SET_LANG') {
-                console.info(`[LANG][IFRAME][RECEIVED] ${msg.lang} from ${event.origin}`);
+            if (msg.type === 'UNBREAK_SET_LANG' || msg.type === 'UNBREAK_SET_LOCALE') {
+                const receivedVia = msg.type;
+                const newLang = msg.lang;
+                
+                // Log incoming message
+                console.info(`[IFRAME][LANG] received lang=${newLang} via ${receivedVia}`);
                 
                 // Origin validation
                 if (!isOriginAllowed(event.origin)) {
-                    console.warn(`[LANG][IFRAME][BLOCKED] Invalid origin: ${event.origin}`);
+                    console.warn(`[IFRAME][SECURITY] blocked origin=${event.origin}`);
                     return;
                 }
                 
-                const newLang = msg.lang;
-                
                 if (newLang === 'de' || newLang === 'en') {
+                    // Log before/after
+                    const i18nBefore = language;
+                    console.info(`[IFRAME][LANG] i18n.before=${i18nBefore} i18n.after=${newLang}`);
+                    
                     // Apply language
                     setLanguage(newLang);
                     setHasReceivedLanguage(true);
-                    console.info(`[LANG][IFRAME][APPLIED] ${newLang}`);
                     
-                    // Send ACK to parent (ALWAYS)
-                    event.source?.postMessage(
-                        { type: 'UNBREAK_LANG_ACK', lang: newLang },
-                        event.origin
-                    );
-                    console.info(`[LANG][IFRAME->PARENT][ACK] ${newLang}`);
+                    // Force re-render
+                    setRerenderTick(prev => {
+                        const next = prev + 1;
+                        console.info(`[IFRAME][LANG] rerenderTick=${next}`);
+                        return next;
+                    });
+                    
+                    // Send ACK to parent (ALWAYS) with validated targetOrigin
+                    const ackPayload = {
+                        type: 'UNBREAK_LANG_ACK',
+                        lang: newLang,
+                        ...(msg.correlationId && { correlationId: msg.correlationId })
+                    };
+                    event.source?.postMessage(ackPayload, event.origin);
+                    console.info(`[IFRAME][ACK_OUT] sent lang=${newLang} targetOrigin=${event.origin}`);
                 } else {
-                    console.warn(`[LANG][IFRAME][INVALID] Unsupported language: ${newLang}`);
+                    console.warn(`[IFRAME][LANG] invalid language=${newLang}`);
                 }
             }
         };
@@ -142,7 +161,7 @@ export const LanguageProvider = ({ children }) => {
     const t = (path) => translate(language, path);
 
     return (
-        <LanguageContext.Provider value={{ language, setLanguage, t }}>
+        <LanguageContext.Provider value={{ language, setLanguage, t }} key={`lang-${language}-${rerenderTick}`}>
             {children}
         </LanguageContext.Provider>
     );

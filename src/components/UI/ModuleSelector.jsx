@@ -1,19 +1,21 @@
 import React from 'react';
 import { useConfigurator } from '../../context/ConfiguratorContext';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './ModuleSelector.module.css';
 
 const ModuleSelector = () => {
     const { module, setModule } = useConfigurator();
+    const { t } = useLanguage();
 
     const modules = [
-        { id: 'wine', label: 'Weinglas-Halter' },
-        { id: 'champagne', label: 'Champagner-Halter' },
-        { id: 'rubber', label: 'Gummi-Aufsatz' },
+        { id: 'wine', label: t('modules.wine') },
+        { id: 'champagne', label: t('modules.champagne') },
+        { id: 'rubber', label: t('modules.rubber') },
     ];
 
     return (
         <div className={styles.container}>
-            <h3>Glasvariante</h3>
+            <h3>{t('ui.glassVariant')}</h3>
             <div className={styles.grid}>
                 {modules.map((m) => (
                     <button

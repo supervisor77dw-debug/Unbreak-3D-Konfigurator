@@ -8,6 +8,18 @@ import { useConfigurator } from './context/ConfiguratorContext';
 import { useLanguage } from './i18n/LanguageContext';
 import './index.css';
 
+// ============================================
+// GLOBAL MESSAGE INSTRUMENTATION (DEBUG)
+// ============================================
+if (typeof window !== 'undefined') {
+  window.addEventListener('message', (event) => {
+    if (!event?.data) return;
+    
+    const payloadKeys = Object.keys(event.data).join(',');
+    console.info(`[IFRAME][MSG_IN] origin=${event.origin} type=${event.data.type || 'N/A'} payload={${payloadKeys}}`);
+  }, true); // Capture phase to log BEFORE other listeners
+}
+
 function ConfiguratorContent() {
   const { variant, setVariant, colors, finish, quantity, getCurrentConfig } = useConfigurator();
   const { t, language } = useLanguage();

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import ModuleSelector from './ModuleSelector';
 import ColorPicker from './ColorPicker';
 import { useConfigurator, COLOR_PALETTE } from '../../context/ConfiguratorContext';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './Interface.module.css';
 
 const Interface = () => {
@@ -10,6 +11,7 @@ const Interface = () => {
         variant, setVariant,
         colors
     } = useConfigurator();
+    const { t } = useLanguage();
     
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -47,7 +49,7 @@ const Interface = () => {
                 <button 
                     className={styles.mobileMenuButton}
                     onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-                    aria-label="Menü öffnen"
+                    aria-label={t('ui.menu')}
                 >
                     {isDrawerOpen ? '✕' : '⚙️'}
                 </button>
@@ -66,25 +68,25 @@ const Interface = () => {
                 <div className={`${styles.sidebar} ${isDrawerOpen ? styles.drawerOpen : ''}`}>
                     <div className={styles.header}>
                         <h1>UNBREAK ONE</h1>
-                        <p>Produktkonfigurator</p>
+                        <p>{t('ui.configurator')}</p>
                     </div>
 
                 <div className={styles.content}>
                     {/* Variant Selection */}
                     <div className={styles.section}>
-                        <h3>Produktvariante</h3>
+                        <h3>{t('ui.productVariant')}</h3>
                         <div className={styles.tabs}>
                             <button
                                 className={`${styles.tab} ${variant === 'glass_holder' ? styles.activeTab : ''} `}
                                 onClick={() => setVariant('glass_holder')}
                             >
-                                Glashalter
+                                {t('products.glass_holder')}
                             </button>
                             <button
                                 className={`${styles.tab} ${variant === 'bottle_holder' ? styles.activeTab : ''} `}
                                 onClick={() => setVariant('bottle_holder')}
                             >
-                                Flaschenhalter
+                                {t('products.bottle_holder')}
                             </button>
                         </div>
                     </div>
@@ -92,11 +94,10 @@ const Interface = () => {
                     <hr className={styles.divider} />
 
                     <div className={styles.section}>
-                        <h3>Farbauswahl</h3>
+                        <h3>{t('ui.colorSelection')}</h3>
                         {variant === 'bottle_holder' && (
                             <p className={styles.info}>
-                                Der Flaschenhalter wird in edlem Matt-Schwarz geliefert.
-                                Die integrierte Windrose kann farblich angepasst werden.
+                                {t('ui.bottleHolderInfo')}
                             </p>
                         )}
                         <ColorPicker />
@@ -108,13 +109,13 @@ const Interface = () => {
                         className={styles.resetView}
                         onClick={handleResetView}
                     >
-                        🔄 Ansicht zurücksetzen
+                        🔄 {t('ui.resetView')}
                     </button>
                     <button
                         className={styles.addToCart}
                         onClick={handleAddToCart}
                     >
-                        In den Warenkorb
+                        {t('ui.addToCart')}
                     </button>
                 </div>
                 </div>

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import ColorPicker from './ColorPicker';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './PanelHost.module.css';
 
 const PanelHost = ({ activePanel, onClose, variant, children }) => {
+    const { t } = useLanguage();
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 820);
 
     // Update mobile state on resize
@@ -40,10 +42,10 @@ const PanelHost = ({ activePanel, onClose, variant, children }) => {
             <div className={`${styles.panel} ${isMobile ? styles.bottomSheet : styles.popover}`}>
                 <div className={styles.panelHeader}>
                     <h3 className={styles.panelTitle}>
-                        {activePanel === 'colors' && '🎨 Farbauswahl'}
-                        {activePanel === 'actions' && '⚙️ Aktionen'}
+                        {activePanel === 'colors' && `🎨 ${t('ui.colorSelection')}`}
+                        {activePanel === 'actions' && `⚙️ ${t('ui.actions')}`}
                     </h3>
-                    <button className={styles.closeBtn} onClick={onClose} aria-label="Schließen">
+                    <button className={styles.closeBtn} onClick={onClose} aria-label={t('ui.close')}>
                         ✕
                     </button>
                 </div>
@@ -53,8 +55,7 @@ const PanelHost = ({ activePanel, onClose, variant, children }) => {
                         <div className={styles.colorsPanel}>
                             {variant === 'bottle_holder' && (
                                 <p className={styles.info}>
-                                    Der Flaschenhalter wird in edlem Matt-Schwarz geliefert.
-                                    Die integrierte Windrose kann farblich angepasst werden.
+                                    {t('ui.bottleHolderInfo')}
                                 </p>
                             )}
                             <ColorPicker />
