@@ -78,6 +78,10 @@ function ConfiguratorContent() {
     setSaveError(null); // Clear previous errors
     setIsSaving(true);
     
+    // API endpoint derived from returnOrigin
+    const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
+    console.info('[CFG] save start url=', apiUrl);
+    
     try {
       // Build configuration JSON
       const configJSON = buildConfigJSON({
@@ -94,12 +98,8 @@ function ConfiguratorContent() {
         lang: language,
         config: configJSON
       };
-
-      // API endpoint derived from returnOrigin
-      const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
-      console.info('[CFG][API] post ->', apiUrl);
       
-      // POST to config-session API
+      // POST to config-session API (Shop is source of truth)
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -119,16 +119,20 @@ function ConfiguratorContent() {
         throw new Error('Session save failed');
       }
 
-      console.info('[CFG][API] session saved', { sessionId: urlParams.session });
+      console.info('[CFG] save ok session=', urlParams.session);
 
-      // Redirect to shop with session ID
-      const separator = urlParams.returnUrl.includes('?') ? '&' : '?';
-      const redirectUrl = `${urlParams.returnUrl}${separator}sessionId=${encodeURIComponent(urlParams.session)}`;
+      // Build redirect URL with sessionId and preserve lang parameter
+      const url = new URL(urlParams.returnUrl);
+      url.searchParams.set('sessionId', urlParams.session);
+      url.searchParams.set('lang', language);
+      
+      const redirectUrl = url.toString();
+      console.info('[CFG] redirect to=', redirectUrl);
       
       window.location.assign(redirectUrl);
       
     } catch (error) {
-      console.error('[CFG][API] save failed', error);
+      console.error('[CFG] save failed reason=', error.message || error);
       setIsSaving(false);
       setSaveError(error.message || 'Speichern fehlgeschlagen');
     }
