@@ -9,7 +9,9 @@ const TopBar = ({ activePanel, onPanelToggle, variant, setVariant, returnUrl }) 
     };
 
     const handleBackToShop = () => {
-        window.location.href = returnUrl || 'https://www.unbreak-one.com/shop';
+        const targetUrl = returnUrl || 'https://unbreak-one.vercel.app/shop';
+        console.info('[CFG][NAV] backToShop ->', targetUrl);
+        window.location.assign(targetUrl);
     };
 
     return (

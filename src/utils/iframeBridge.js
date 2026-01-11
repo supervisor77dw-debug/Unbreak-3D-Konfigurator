@@ -15,8 +15,6 @@
  */
 const STATIC_ALLOWED_PARENTS = new Set([
     'https://unbreak-one.vercel.app',
-    'https://www.unbreak-one.com',
-    'https://unbreak-one.com',
     // Local development
     'http://localhost:3000',
     'http://localhost:5173',

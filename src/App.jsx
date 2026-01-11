@@ -19,15 +19,47 @@ const generateSessionId = () => {
 };
 
 /**
+ * Allowed return origins (harte Allowlist)
+ */
+const ALLOWED_RETURN_ORIGINS = new Set([
+  'https://unbreak-one.vercel.app',
+]);
+
+/**
  * Parse URL parameters
  */
 const getURLParams = () => {
   const params = new URLSearchParams(window.location.search);
   const lang = params.get('lang') || 'de';
   const session = params.get('session') || generateSessionId();
-  const returnUrl = params.get('return') || 'https://www.unbreak-one.com/shop/config-return';
   
-  return { lang, session, returnUrl };
+  // Parse return parameter with validation
+  let returnUrl = 'https://unbreak-one.vercel.app/shop';
+  let returnOrigin = 'https://unbreak-one.vercel.app';
+  
+  const returnRaw = params.get('return');
+  if (returnRaw) {
+    try {
+      const decoded = decodeURIComponent(returnRaw);
+      const parsedUrl = new URL(decoded);
+      const origin = parsedUrl.origin;
+      
+      // Validate against allowlist
+      if (ALLOWED_RETURN_ORIGINS.has(origin)) {
+        returnUrl = decoded;
+        returnOrigin = origin;
+      } else {
+        console.warn('[CFG][BOOT] Invalid return origin, using fallback:', origin);
+      }
+    } catch (err) {
+      console.warn('[CFG][BOOT] Invalid return URL, using fallback:', returnRaw);
+    }
+  }
+  
+  // Log boot info
+  console.info('[CFG][BOOT]', { lang, returnUrl, returnOrigin });
+  
+  return { lang, session, returnUrl, returnOrigin };
 };
 
 function ConfiguratorContent() {
@@ -38,14 +70,7 @@ function ConfiguratorContent() {
   const [saveError, setSaveError] = useState(null);
   const [urlParams] = useState(() => getURLParams());
 
-  // Log initialization
-  useEffect(() => {
-    console.info('[CFG] init', {
-      sessionId: urlParams.session,
-      lang: urlParams.lang,
-      return: urlParams.returnUrl
-    });
-  }, [urlParams]);
+  // Initialization logging removed (already done in getURLParams)
 
   const handleSaveAndReturn = async () => {
     if (isSaving) return;
@@ -70,8 +95,12 @@ function ConfiguratorContent() {
         config: configJSON
       };
 
+      // API endpoint derived from returnOrigin
+      const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
+      console.info('[CFG][API] post ->', apiUrl);
+      
       // POST to config-session API
-      const response = await fetch('https://www.unbreak-one.com/api/config-session', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,16 +119,16 @@ function ConfiguratorContent() {
         throw new Error('Session save failed');
       }
 
-      console.info('[CFG] saved session', { sessionId: urlParams.session });
+      console.info('[CFG][API] session saved', { sessionId: urlParams.session });
 
       // Redirect to shop with session ID
       const separator = urlParams.returnUrl.includes('?') ? '&' : '?';
       const redirectUrl = `${urlParams.returnUrl}${separator}session=${encodeURIComponent(urlParams.session)}`;
       
-      window.location.href = redirectUrl;
+      window.location.assign(redirectUrl);
       
     } catch (error) {
-      console.error('[CFG] save failed', error);
+      console.error('[CFG][API] save failed', error);
       setIsSaving(false);
       setSaveError(error.message || 'Speichern fehlgeschlagen');
     }
@@ -131,7 +160,7 @@ function ConfiguratorContent() {
             </span>
             <button
               className="error-back-btn"
-              onClick={() => window.location.href = urlParams.returnUrl}
+              onClick={() => window.location.assign(urlParams.returnUrl)}
             >
               {t('ui.backToShop') || 'Zurück zum Shop'}
             </button>
