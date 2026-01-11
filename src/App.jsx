@@ -123,7 +123,7 @@ function ConfiguratorContent() {
 
       // Redirect to shop with session ID
       const separator = urlParams.returnUrl.includes('?') ? '&' : '?';
-      const redirectUrl = `${urlParams.returnUrl}${separator}session=${encodeURIComponent(urlParams.session)}`;
+      const redirectUrl = `${urlParams.returnUrl}${separator}sessionId=${encodeURIComponent(urlParams.session)}`;
       
       window.location.assign(redirectUrl);
       
