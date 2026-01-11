@@ -9,14 +9,21 @@ import { useLanguage } from './i18n/LanguageContext';
 import './index.css';
 
 // ============================================
+// BUILD INFORMATION
+// ============================================
+const BUILD_DATE = '2026-01-11T15:30:00Z';
+const BUILD_COMMIT = '9792771';
+console.info('[IFRAME][BUILD]', BUILD_DATE, 'commit:', BUILD_COMMIT);
+
+// ============================================
 // GLOBAL MESSAGE INSTRUMENTATION (DEBUG)
 // ============================================
 if (typeof window !== 'undefined') {
   window.addEventListener('message', (event) => {
     if (!event?.data) return;
     
-    const payloadKeys = Object.keys(event.data).join(',');
-    console.info(`[IFRAME][MSG_IN] origin=${event.origin} type=${event.data.type || 'N/A'} payload={${payloadKeys}}`);
+    const msgType = event.data?.type || event.data?.event || 'unknown';
+    console.info('[IFRAME][MSG_IN]', { origin: event.origin, msgType, data: event.data });
   }, true); // Capture phase to log BEFORE other listeners
 }
 
