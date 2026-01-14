@@ -19,6 +19,7 @@ export const translations = {
             dark_blue: 'Dunkelblau',
             red: 'Rot',
             black: 'Schwarz',
+            grey: 'Grau',
         },
         
         // Parts
@@ -95,6 +96,7 @@ export const translations = {
             dark_blue: 'Dark Blue',
             red: 'Red',
             black: 'Black',
+            grey: 'Grey',
         },
         
         // Parts

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useConfigurator, COLOR_PALETTE, ADAPTER_ALLOWED_COLORS } from '../../context/ConfiguratorContext';
+import { useConfigurator, COLOR_PALETTE, GUMMILIPPE_ALLOWED_COLORS } from '../../context/ConfiguratorContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './ColorPicker.module.css';
 
@@ -54,7 +54,7 @@ const ColorPicker = () => {
                         activeColor={colors.module}
                         onSelect={(color) => updateColor('module', color)}
                         t={t}
-                        allowedColors={ADAPTER_ALLOWED_COLORS}
+                        allowedColors={GUMMILIPPE_ALLOWED_COLORS}
                     />
                 </>
             )}
