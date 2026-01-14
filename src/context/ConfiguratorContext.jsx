@@ -36,12 +36,12 @@ export const COLOR_PALETTE = {
 };
 
 /**
- * GUMMILIPPE (ADAPTER) COLOR RESTRICTIONS
- * Gummilippe uses different material -> grey instead of mint
+ * ADAPTER COLOR RESTRICTIONS
+ * Adapter uses different material -> grey instead of mint
  * CRITICAL: Only 5 colors available (product requirement)
  */
-export const GUMMILIPPE_ALLOWED_COLORS = ['red', 'black', 'ice_blue', 'green', 'grey'];
-export const GUMMILIPPE_DEFAULT_COLOR = 'black';
+export const ADAPTER_ALLOWED_COLORS = ['red', 'black', 'ice_blue', 'green', 'grey'];
+export const ADAPTER_DEFAULT_COLOR = 'black';
 
 // SKU mapping
 const PRODUCT_SKU_MAP = {
@@ -120,9 +120,9 @@ export const buildConfigJSON = ({ nextVariant, nextColors, nextFinish, nextQty, 
     } else {
         // Glass holder: all 4 parts
         // Validate adapter color before sending to backend
-        const adapterColor = GUMMILIPPE_ALLOWED_COLORS.includes(nextColors.module)
+        const adapterColor = ADAPTER_ALLOWED_COLORS.includes(nextColors.module)
             ? nextColors.module
-            : GUMMILIPPE_DEFAULT_COLOR;
+            : ADAPTER_DEFAULT_COLOR;
         
         if (adapterColor !== nextColors.module) {
             console.warn('[CONFIG][BUILD] Invalid adapter color blocked:', nextColors.module, '- using:', adapterColor);
@@ -144,10 +144,16 @@ export const ConfiguratorProvider = ({ children }) => {
         // Validate and migrate adapter color on init
         const initialColors = { ...CONFIGURATION_DEFAULTS.colors };
         
+        // MIGRATION: Convert old 'mint' adapter values to 'grey' (different material)
+        if (initialColors.module === 'mint') {
+            console.warn('[CONFIG][INIT] Migrating adapter color mint -> grey (material change)');
+            initialColors.module = 'grey';
+        }
+        
         // Check if module/adapter color is valid
-        if (!GUMMILIPPE_ALLOWED_COLORS.includes(initialColors.module)) {
-            console.warn('[CONFIG][INIT] Invalid adapter color detected:', initialColors.module, '- using default:', GUMMILIPPE_DEFAULT_COLOR);
-            initialColors.module = GUMMILIPPE_DEFAULT_COLOR;
+        if (!ADAPTER_ALLOWED_COLORS.includes(initialColors.module)) {
+            console.warn('[CONFIG][INIT] Invalid adapter color detected:', initialColors.module, '- using default:', ADAPTER_DEFAULT_COLOR);
+            initialColors.module = ADAPTER_DEFAULT_COLOR;
         }
         
         return initialColors;
@@ -175,9 +181,9 @@ export const ConfiguratorProvider = ({ children }) => {
      */
     const updateColor = useCallback((part, colorName) => {
         // Validate adapter color restrictions
-        if (part === 'module' && !GUMMILIPPE_ALLOWED_COLORS.includes(colorName)) {
-            console.warn('[CONFIG][COLOR] Invalid adapter color blocked:', colorName, '- using default:', GUMMILIPPE_DEFAULT_COLOR);
-            colorName = GUMMILIPPE_DEFAULT_COLOR;
+        if (part === 'module' && !ADAPTER_ALLOWED_COLORS.includes(colorName)) {
+            console.warn('[CONFIG][COLOR] Invalid adapter color blocked:', colorName, '- using default:', ADAPTER_DEFAULT_COLOR);
+            colorName = ADAPTER_DEFAULT_COLOR;
         }
         
         // Compute next colors state
