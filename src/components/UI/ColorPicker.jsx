@@ -1,14 +1,19 @@
 import React from 'react';
-import { useConfigurator, COLOR_PALETTE } from '../../context/ConfiguratorContext';
+import { useConfigurator, COLOR_PALETTE, ADAPTER_ALLOWED_COLORS } from '../../context/ConfiguratorContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './ColorPicker.module.css';
 
-const ColorSection = ({ title, activeColor, onSelect, t }) => {
+const ColorSection = ({ title, activeColor, onSelect, t, allowedColors = null }) => {
+    // Filter palette if allowedColors is specified (for Adapter)
+    const availableColors = allowedColors
+        ? Object.entries(COLOR_PALETTE).filter(([colorKey]) => allowedColors.includes(colorKey))
+        : Object.entries(COLOR_PALETTE);
+    
     return (
         <div className={styles.section}>
             <h4>{title}</h4>
             <div className={styles.palette}>
-                {Object.entries(COLOR_PALETTE).map(([colorKey, hex]) => (
+                {availableColors.map(([colorKey, hex]) => (
                     <button
                         key={colorKey}
                         className={`${styles.swatch} ${activeColor === colorKey ? styles.active : ''}`}
@@ -49,6 +54,7 @@ const ColorPicker = () => {
                         activeColor={colors.module}
                         onSelect={(color) => updateColor('module', color)}
                         t={t}
+                        allowedColors={ADAPTER_ALLOWED_COLORS}
                     />
                 </>
             )}

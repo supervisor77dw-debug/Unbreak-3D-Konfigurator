@@ -34,6 +34,13 @@ export const COLOR_PALETTE = {
     black: '#121212',
 };
 
+/**
+ * ADAPTER COLOR RESTRICTIONS
+ * Adapter (module) ONLY available in 5 colors (product requirement)
+ */
+export const ADAPTER_ALLOWED_COLORS = ['red', 'black', 'ice_blue', 'green', 'mint'];
+export const ADAPTER_DEFAULT_COLOR = 'black';
+
 // SKU mapping
 const PRODUCT_SKU_MAP = {
     glass_holder: 'UNBREAK-GLAS-01',
@@ -60,7 +67,7 @@ const buildConfig = ({ nextVariant, nextColors, nextFinish, nextQty }) => {
             // GLASS HOLDER: ALL 4 PARTS (REQUIRED)
             base: nextColors.base,         // Grundplatte
             arm: nextColors.arm,           // Arm
-            module: nextColors.module,     // Gummilippe/Modul
+            module: nextColors.module,     // Adapter
             pattern: nextColors.pattern,   // Windrose/Pattern
           };
     
@@ -73,7 +80,7 @@ const buildConfig = ({ nextVariant, nextColors, nextFinish, nextQty }) => {
         : [
             { key: 'base', label_de: 'Grundplatte', editable: true },
             { key: 'arm', label_de: 'Arm', editable: true },
-            { key: 'module', label_de: 'Gummilippe', editable: true },
+            { key: 'module', label_de: 'Adapter', editable: true },
             { key: 'pattern', label_de: 'Windrose', editable: true },
           ];
     
@@ -110,9 +117,18 @@ export const buildConfigJSON = ({ nextVariant, nextColors, nextFinish, nextQty, 
         configJSON.pattern = nextColors.pattern;
     } else {
         // Glass holder: all 4 parts
+        // Validate adapter color before sending to backend
+        const adapterColor = ADAPTER_ALLOWED_COLORS.includes(nextColors.module)
+            ? nextColors.module
+            : ADAPTER_DEFAULT_COLOR;
+        
+        if (adapterColor !== nextColors.module) {
+            console.warn('[CONFIG][BUILD] Invalid adapter color blocked:', nextColors.module, '- using:', adapterColor);
+        }
+        
         configJSON.base = nextColors.base;
         configJSON.arm = nextColors.arm;
-        configJSON.module = nextColors.module;
+        configJSON.module = adapterColor;  // Validated adapter color
         configJSON.pattern = nextColors.pattern;
     }
     
@@ -122,7 +138,18 @@ export const buildConfigJSON = ({ nextVariant, nextColors, nextFinish, nextQty, 
 export const ConfiguratorProvider = ({ children }) => {
     const [variant, setVariant] = useState(CONFIGURATION_DEFAULTS.variant);
     const [pattern, setPattern] = useState(CONFIGURATION_DEFAULTS.pattern);
-    const [colors, setColors] = useState(CONFIGURATION_DEFAULTS.colors);
+    const [colors, setColors] = useState(() => {
+        // Validate and migrate adapter color on init
+        const initialColors = { ...CONFIGURATION_DEFAULTS.colors };
+        
+        // Check if module/adapter color is valid
+        if (!ADAPTER_ALLOWED_COLORS.includes(initialColors.module)) {
+            console.warn('[CONFIG][INIT] Invalid adapter color detected:', initialColors.module, '- using default:', ADAPTER_DEFAULT_COLOR);
+            initialColors.module = ADAPTER_DEFAULT_COLOR;
+        }
+        
+        return initialColors;
+    });
     const [finish, setFinish] = useState(CONFIGURATION_DEFAULTS.finish);
     const [quantity, setQuantity] = useState(CONFIGURATION_DEFAULTS.quantity);
 
@@ -142,8 +169,15 @@ export const ConfiguratorProvider = ({ children }) => {
     /**
      * Update color and broadcast change to parent
      * NO setTimeout - uses explicit next state to prevent stale closures
+     * VALIDATION: Adapter colors are restricted to allowed list
      */
     const updateColor = useCallback((part, colorName) => {
+        // Validate adapter color restrictions
+        if (part === 'module' && !ADAPTER_ALLOWED_COLORS.includes(colorName)) {
+            console.warn('[CONFIG][COLOR] Invalid adapter color blocked:', colorName, '- using default:', ADAPTER_DEFAULT_COLOR);
+            colorName = ADAPTER_DEFAULT_COLOR;
+        }
+        
         // Compute next colors state
         const nextColors = {
             ...colors,

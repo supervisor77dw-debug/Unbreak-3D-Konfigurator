@@ -25,7 +25,7 @@ export const translations = {
         parts: {
             base: 'Grundplatte',
             arm: 'Arm',
-            module: 'Gummilippe',
+            module: 'Adapter',
             pattern: 'Muster',
         },
         
@@ -101,7 +101,7 @@ export const translations = {
         parts: {
             base: 'Base Plate',
             arm: 'Arm',
-            module: 'Rubber Lip',
+            module: 'Adapter',
             pattern: 'Pattern',
         },
         
