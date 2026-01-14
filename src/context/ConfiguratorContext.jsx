@@ -23,6 +23,7 @@ export const CONFIGURATION_DEFAULTS = {
  * COLOR PALETTE - Technical Keys (snake_case)
  * CRITICAL: Keys MUST match backend schema
  * HEX values for rendering only
+ * STANDARD 7 COLORS for Base, Arm, Pattern (NO grey)
  */
 export const COLOR_PALETTE = {
     mint: '#a2d9ce',
@@ -32,8 +33,26 @@ export const COLOR_PALETTE = {
     dark_blue: '#1b2631',   // snake_case (was: darkBlue)
     red: '#b03a2e',
     black: '#121212',
-    grey: '#7f8c8d',        // For adapter/module only
 };
+
+/**
+ * ADAPTER-SPECIFIC COLOR PALETTE
+ * Different material (rubber) -> grey instead of mint
+ * CRITICAL: Only for adapter/module part
+ */
+export const ADAPTER_COLOR_PALETTE = {
+    red: '#b03a2e',
+    black: '#121212',
+    ice_blue: '#5499c7',
+    green: '#145a32',
+    grey: '#7f8c8d',        // ADAPTER ONLY - not available for other parts
+};
+
+/**
+ * STANDARD PARTS COLOR RESTRICTIONS
+ * For Base, Arm, Pattern - 7 colors (NO grey)
+ */
+export const STANDARD_ALLOWED_COLORS = ['mint', 'green', 'purple', 'ice_blue', 'dark_blue', 'red', 'black'];
 
 /**
  * ADAPTER COLOR RESTRICTIONS
@@ -141,20 +160,33 @@ export const ConfiguratorProvider = ({ children }) => {
     const [variant, setVariant] = useState(CONFIGURATION_DEFAULTS.variant);
     const [pattern, setPattern] = useState(CONFIGURATION_DEFAULTS.pattern);
     const [colors, setColors] = useState(() => {
-        // Validate and migrate adapter color on init
+        // Validate and migrate colors on init
         const initialColors = { ...CONFIGURATION_DEFAULTS.colors };
         
-        // MIGRATION: Convert old 'mint' adapter values to 'grey' (different material)
+        // ADAPTER: Convert old 'mint' to 'grey' (different material)
         if (initialColors.module === 'mint') {
             console.warn('[CONFIG][INIT] Migrating adapter color mint -> grey (material change)');
             initialColors.module = 'grey';
         }
         
-        // Check if module/adapter color is valid
+        // ADAPTER: Validate allowed colors
         if (!ADAPTER_ALLOWED_COLORS.includes(initialColors.module)) {
             console.warn('[CONFIG][INIT] Invalid adapter color detected:', initialColors.module, '- using default:', ADAPTER_DEFAULT_COLOR);
             initialColors.module = ADAPTER_DEFAULT_COLOR;
         }
+        
+        // BASE/ARM/PATTERN: Block grey (wrong material)
+        ['base', 'arm', 'pattern'].forEach(part => {
+            if (initialColors[part] === 'grey') {
+                console.warn('[CONFIG][INIT] Grey not allowed for', part, '- using black');
+                initialColors[part] = 'black';
+            }
+            // Validate against standard colors
+            if (!STANDARD_ALLOWED_COLORS.includes(initialColors[part])) {
+                console.warn('[CONFIG][INIT] Invalid color for', part, ':', initialColors[part], '- using black');
+                initialColors[part] = 'black';
+            }
+        });
         
         return initialColors;
     });
@@ -177,13 +209,26 @@ export const ConfiguratorProvider = ({ children }) => {
     /**
      * Update color and broadcast change to parent
      * NO setTimeout - uses explicit next state to prevent stale closures
-     * VALIDATION: Adapter colors are restricted to allowed list
+     * VALIDATION: Part-specific color restrictions
      */
     const updateColor = useCallback((part, colorName) => {
         // Validate adapter color restrictions
-        if (part === 'module' && !ADAPTER_ALLOWED_COLORS.includes(colorName)) {
-            console.warn('[CONFIG][COLOR] Invalid adapter color blocked:', colorName, '- using default:', ADAPTER_DEFAULT_COLOR);
-            colorName = ADAPTER_DEFAULT_COLOR;
+        if (part === 'module') {
+            if (!ADAPTER_ALLOWED_COLORS.includes(colorName)) {
+                console.warn('[CONFIG][COLOR] Invalid adapter color blocked:', colorName, '- using default:', ADAPTER_DEFAULT_COLOR);
+                colorName = ADAPTER_DEFAULT_COLOR;
+            }
+        } else {
+            // Base, Arm, Pattern: Block grey (different material)
+            if (colorName === 'grey') {
+                console.warn('[CONFIG][COLOR] Grey not allowed for', part, '- using black');
+                colorName = 'black';
+            }
+            // Validate against standard colors
+            if (!STANDARD_ALLOWED_COLORS.includes(colorName)) {
+                console.warn('[CONFIG][COLOR] Invalid color for', part, ':', colorName, '- using black');
+                colorName = 'black';
+            }
         }
         
         // Compute next colors state

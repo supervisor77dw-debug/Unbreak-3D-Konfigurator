@@ -1,13 +1,16 @@
 import React from 'react';
-import { useConfigurator, COLOR_PALETTE, ADAPTER_ALLOWED_COLORS } from '../../context/ConfiguratorContext';
+import { useConfigurator, COLOR_PALETTE, ADAPTER_COLOR_PALETTE, ADAPTER_ALLOWED_COLORS, STANDARD_ALLOWED_COLORS } from '../../context/ConfiguratorContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './ColorPicker.module.css';
 
-const ColorSection = ({ title, activeColor, onSelect, t, allowedColors = null }) => {
-    // Filter palette if allowedColors is specified (for Adapter)
+const ColorSection = ({ title, activeColor, onSelect, t, allowedColors = null, customPalette = null }) => {
+    // Use custom palette (for Adapter) or standard palette
+    const palette = customPalette || COLOR_PALETTE;
+    
+    // Filter palette if allowedColors is specified
     const availableColors = allowedColors
-        ? Object.entries(COLOR_PALETTE).filter(([colorKey]) => allowedColors.includes(colorKey))
-        : Object.entries(COLOR_PALETTE);
+        ? Object.entries(palette).filter(([colorKey]) => allowedColors.includes(colorKey))
+        : Object.entries(palette);
     
     return (
         <div className={styles.section}>
@@ -42,12 +45,14 @@ const ColorPicker = () => {
                         activeColor={colors.base}
                         onSelect={(color) => updateColor('base', color)}
                         t={t}
+                        allowedColors={STANDARD_ALLOWED_COLORS}
                     />
                     <ColorSection
                         title={t('parts.arm')}
                         activeColor={colors.arm}
                         onSelect={(color) => updateColor('arm', color)}
                         t={t}
+                        allowedColors={STANDARD_ALLOWED_COLORS}
                     />
                     <ColorSection
                         title={t('parts.module')}
@@ -55,6 +60,7 @@ const ColorPicker = () => {
                         onSelect={(color) => updateColor('module', color)}
                         t={t}
                         allowedColors={ADAPTER_ALLOWED_COLORS}
+                        customPalette={ADAPTER_COLOR_PALETTE}
                     />
                 </>
             )}
@@ -64,6 +70,7 @@ const ColorPicker = () => {
                 activeColor={colors.pattern}
                 onSelect={(color) => updateColor('pattern', color)}
                 t={t}
+                allowedColors={STANDARD_ALLOWED_COLORS}
             />
         </div>
     );
