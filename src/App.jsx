@@ -80,70 +80,90 @@ function ConfiguratorContent() {
   const handleSaveAndReturn = async () => {
     if (isSaving) return;
     
-    setSaveError(null); // Clear previous errors
+    setSaveError(null);
     setIsSaving(true);
     
     try {
       console.log('[CFG][ADD_TO_CART_START]', { variant, colors, finish, quantity, language });
 
-      // Build cart item for localStorage
+      // Build cart item for URL parameter (cross-domain safe)
       const cartItem = {
         source: 'configurator',
-        variant: variant, // glass_holder | bottle_holder
+        product_id: 'glass_configurator',
+        sku: variant === 'glass_holder' ? 'UNBREAK-GLAS-CONFIG' : 'UNBREAK-FLASCHE-CONFIG',
+        name: language === 'de' 
+          ? (variant === 'glass_holder' ? 'Individueller Glashalter' : 'Individueller Flaschenhalter')
+          : (variant === 'glass_holder' ? 'Custom Glass Holder' : 'Custom Bottle Holder'),
         quantity: quantity,
-        price: 1990, // Shop will calculate final price
-        configuration: {
-          base: colors.base,
-          arm: colors.arm,
-          module: colors.module,
-          pattern: colors.pattern,
+        price_cents: 1990, // Shop will recalculate
+        currency: 'EUR',
+        configured: true,
+        config: {
+          variant: variant,
+          colors: {
+            base: colors.base,
+            arm: colors.arm,
+            module: colors.module,
+            pattern: colors.pattern,
+          },
           finish: finish,
         },
         locale: language,
         timestamp: Date.now(),
       };
 
-      console.log('[CFG][SAVE_TO_LOCALSTORAGE]', cartItem);
+      console.log('[CFG][CART_ITEM_BUILT]', cartItem);
 
-      // Save to localStorage
+      // Encode for URL parameter (cross-domain safe)
       try {
-        localStorage.setItem('unbreak_configurator_cart_item', JSON.stringify(cartItem));
-        console.log('[CFG][LOCALSTORAGE_SAVED]');
-      } catch (storageError) {
-        console.error('[CFG][LOCALSTORAGE_FAILED]', storageError);
-        throw new Error('Speichern fehlgeschlagen');
-      }
-
-      // Optional: Save to backend (non-blocking, non-critical)
-      try {
-        const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
-        const configJSON = buildConfigJSON({
-          nextVariant: variant,
-          nextColors: colors,
-          nextFinish: finish,
-          nextQty: quantity,
-          lang: language,
-        });
+        const json = JSON.stringify(cartItem);
+        const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(json))));
         
-        await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: urlParams.session,
+        console.log('[CFG][ENCODED_LEN]', encoded.length);
+
+        // Check URL length limit
+        if (encoded.length > 1500) {
+          console.warn('[CFG][URL_TOO_LONG] Fallback to backend session required');
+          throw new Error('Configuration too large for URL parameter');
+        }
+
+        // Optional: Save to backend (non-blocking backup)
+        try {
+          const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
+          const configJSON = buildConfigJSON({
+            nextVariant: variant,
+            nextColors: colors,
+            nextFinish: finish,
+            nextQty: quantity,
             lang: language,
-            config: configJSON
-          }),
-          credentials: 'omit',
-        });
-        
-        console.log('[CFG][API] Backend save successful');
-      } catch (backendError) {
-        console.warn('[CFG][API] Backend save failed (non-critical):', backendError.message);
-      }
+          });
+          
+          await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: urlParams.session,
+              lang: language,
+              config: configJSON
+            }),
+            credentials: 'omit',
+          });
+          
+          console.log('[CFG][API] Backend save successful');
+        } catch (backendError) {
+          console.warn('[CFG][API] Backend save failed (non-critical):', backendError.message);
+        }
 
-      // SUCCESS: Redirect to shop
-      console.log('[CFG][REDIRECT_TO_SHOP]', 'https://www.unbreak-one.com/shop');
-      window.location.href = 'https://www.unbreak-one.com/shop';
+        // Redirect to shop with URL parameter
+        const shopUrl = `https://www.unbreak-one.com/shop?cfg=${encoded}&lang=${language}`;
+        console.log('[CFG][REDIRECT_TO_SHOP]', shopUrl);
+        
+        window.location.href = shopUrl;
+
+      } catch (encodeError) {
+        console.error('[CFG][ENCODE_FAILED]', encodeError);
+        throw new Error('Encoding fehlgeschlagen');
+      }
       
     } catch (error) {
       console.error('[CFG][ADD_TO_CART_FAILED]', error.message || error);

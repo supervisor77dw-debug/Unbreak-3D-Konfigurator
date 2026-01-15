@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Test - localStorage Cart Flow</title>
+    <title>Shop Test - URL Parameter Cart Flow</title>
     <style>
         * {
             margin: 0;
@@ -196,10 +196,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🛒 Shop Test - localStorage Cart Flow</h1>
+            <h1>🛒 Shop Test - URL Parameter Cart Flow</h1>
             <div class="status">
                 <div class="status-indicator" id="status-indicator"></div>
-                <span id="status-text">Warte auf localStorage...</span>
+                <span id="status-text">Warte auf URL Parameter...</span>
             </div>
         </div>
 
@@ -334,7 +334,53 @@
         }
 
         // ============================================
-        // STORAGE POLLING (Simulates Shop Page Load)
+        // URL PARAMETER CHECK (Primary Method)
+        // ============================================
+        function checkURLParameter() {
+            const params = new URLSearchParams(window.location.search);
+            const cfg = params.get('cfg');
+            
+            if (cfg) {
+                try {
+                    log('🔗 URL Parameter gefunden', { length: cfg.length });
+                    
+                    // Decode: URL -> Base64 -> UTF-8 -> JSON
+                    const base64 = decodeURIComponent(cfg);
+                    const utf8 = escape(atob(base64));
+                    const json = decodeURIComponent(utf8);
+                    const item = JSON.parse(json);
+                    
+                    log('📦 URL Parameter decoded', item);
+                    
+                    // Validate
+                    if (!item?.sku || !Number.isInteger(item?.price_cents)) {
+                        throw new Error('Invalid item schema');
+                    }
+                    
+                    // Add to cart
+                    addToCart(item.config || item.configuration);
+                    
+                    // Update status
+                    updateStatus(true, 'Produkt aus URL geladen ✓');
+                    
+                    // Clean URL (prevent double-add on refresh)
+                    params.delete('cfg');
+                    const cleanUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+                    window.history.replaceState({}, '', cleanUrl);
+                    
+                    log('🧹 URL bereinigt (kein Double-Add)', { cleanUrl });
+                    
+                } catch (err) {
+                    log('❌ Error parsing URL parameter', { error: err.message });
+                }
+            }
+        }
+
+        // Run on page load
+        checkURLParameter();
+
+        // ============================================
+        // STORAGE POLLING (Fallback/Legacy)
         // ============================================
         let lastChecked = null;
 
@@ -405,11 +451,8 @@
         // ============================================
         function updateStatus(isReady, text) {
             const indicator = document.getElementById('status-indicator');
-            const statusText = docu (localStorage Flow)');
-        log('📡 Polling localStorage alle 500ms');
-        
-        // Initial check
-        checkForCartItem(
+            const statusText = document.getElementById('status-text');
+
             if (isReady) {
                 indicator.classList.add('ready');
             } else {
@@ -422,8 +465,8 @@
         // ============================================
         // INIT
         // ============================================
-        log('🚀 Shop Test gestartet');
-        log('📡 Listening auf:', window.location.origin);
+        log('🚀 Shop Test gestartet (URL Parameter Flow)');
+        log('📡 Checking URL parameter on load');
 
     </script>
 </body>
