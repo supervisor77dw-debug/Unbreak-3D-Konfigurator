@@ -20,9 +20,12 @@ const generateSessionId = () => {
 
 /**
  * Allowed return origins (harte Allowlist)
+ * CRITICAL: Production canonical domain is unbreak-one.com
  */
 const ALLOWED_RETURN_ORIGINS = new Set([
-  'https://unbreak-one.vercel.app',
+  'https://unbreak-one.com',           // Production canonical (PRIMARY)
+  'https://www.unbreak-one.com',       // Production www variant
+  'https://unbreak-one.vercel.app',    // Vercel production (fallback)
 ]);
 
 /**
@@ -34,8 +37,8 @@ const getURLParams = () => {
   const session = params.get('session') || generateSessionId();
   
   // Parse return parameter with validation
-  let returnUrl = 'https://unbreak-one.vercel.app/shop';
-  let returnOrigin = 'https://unbreak-one.vercel.app';
+  let returnUrl = 'https://unbreak-one.com/shop';
+  let returnOrigin = 'https://unbreak-one.com';
   
   const returnRaw = params.get('return');
   if (returnRaw) {

@@ -12,9 +12,12 @@
 
 /**
  * Static allowed parent origins (production + localhost)
+ * CRITICAL: Production canonical domain is unbreak-one.com
  */
 const STATIC_ALLOWED_PARENTS = new Set([
-    'https://unbreak-one.vercel.app',
+    'https://unbreak-one.com',           // Production canonical (PRIMARY)
+    'https://www.unbreak-one.com',       // Production www variant
+    'https://unbreak-one.vercel.app',    // Vercel production (fallback)
     // Local development
     'http://localhost:3000',
     'http://localhost:5173',
@@ -27,7 +30,9 @@ const STATIC_ALLOWED_PARENTS = new Set([
  * CRITICAL: Supports Vercel Preview Deployments via pattern matching
  * 
  * Allowed patterns:
- * - https://unbreak-one.vercel.app (production)
+ * - https://unbreak-one.com (production canonical - PRIMARY)
+ * - https://www.unbreak-one.com (production www variant)
+ * - https://unbreak-one.vercel.app (production vercel - fallback)
  * - https://unbreak-[preview-id].vercel.app (preview deployments)
  * - http://localhost:3000 (local dev)
  * 
@@ -96,9 +101,9 @@ function getParentOrigin() {
         return storedOrigin;
     }
     
-    // Safe default fallback (production)
+    // Safe default fallback (production canonical)
     console.warn('[UNBREAK_IFRAME] Could not determine parent origin, using production fallback');
-    return 'https://unbreak-one.vercel.app';
+    return 'https://unbreak-one.com';
 }
 
 /**
@@ -121,7 +126,7 @@ export const postToParent = (payload, reason = '') => {
     }
     
     // Validate origin (with fallback already validated)
-    const targetOrigin = parentOrigin || 'https://unbreak-one.vercel.app';
+    const targetOrigin = parentOrigin || 'https://unbreak-one.com';
     
     // Send message with dynamic targetOrigin (NOT wildcard '*')
     window.parent.postMessage(payload, targetOrigin);
