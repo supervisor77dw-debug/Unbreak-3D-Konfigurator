@@ -6,7 +6,6 @@ import PanelHost from './components/UI/PanelHost';
 import DebugOverlay from './components/UI/DebugOverlay';
 import { useConfigurator } from './context/ConfiguratorContext';
 import { useLanguage } from './i18n/LanguageContext';
-import { addToCart } from './utils/iframeBridge';
 import './index.css';
 
 /**
@@ -85,25 +84,36 @@ function ConfiguratorContent() {
     setIsSaving(true);
     
     try {
-      // Build configuration for postMessage
-      const config = {
-        variant: variant,
-        product: variant,
-        colors: colors,
-        finish: finish,
+      console.log('[CFG][ADD_TO_CART_START]', { variant, colors, finish, quantity, language });
+
+      // Build cart item for localStorage
+      const cartItem = {
+        source: 'configurator',
+        variant: variant, // glass_holder | bottle_holder
         quantity: quantity,
+        price: 1990, // Shop will calculate final price
+        configuration: {
+          base: colors.base,
+          arm: colors.arm,
+          module: colors.module,
+          pattern: colors.pattern,
+          finish: finish,
+        },
         locale: language,
-        lang: language,
+        timestamp: Date.now(),
       };
 
-      console.log('[CFG][ADD_TO_CART_START]', config);
+      console.log('[CFG][SAVE_TO_LOCALSTORAGE]', cartItem);
 
-      // Send ADD_TO_CART message and wait for ACK
-      // This will log: [CFG][POSTMSG_SEND] → [CFG][WAIT_ACK] → [CFG][ACK_RECEIVED] or [CFG][ACK_TIMEOUT]
-      const ack = await addToCart(config, urlParams.session);
-      
-      console.log('[CFG][ADD_TO_CART_SUCCESS]', ack);
-      
+      // Save to localStorage
+      try {
+        localStorage.setItem('unbreak_configurator_cart_item', JSON.stringify(cartItem));
+        console.log('[CFG][LOCALSTORAGE_SAVED]');
+      } catch (storageError) {
+        console.error('[CFG][LOCALSTORAGE_FAILED]', storageError);
+        throw new Error('Speichern fehlgeschlagen');
+      }
+
       // Optional: Save to backend (non-blocking, non-critical)
       try {
         const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
@@ -126,28 +136,19 @@ function ConfiguratorContent() {
           credentials: 'omit',
         });
         
-        console.info('[CFG][API] Backend save successful');
+        console.log('[CFG][API] Backend save successful');
       } catch (backendError) {
         console.warn('[CFG][API] Backend save failed (non-critical):', backendError.message);
       }
-      
-      // SUCCESS: ACK received, redirect to cart
-      if (ack?.ok) {
-        console.log('[CFG][REDIRECT_TO_CART]');
-        window.location.href = 'https://www.unbreak-one.com/cart';
-      } else {
-        console.error('[CFG][ADD_TO_CART_FAILED_ACK]', ack);
-        setSaveError('Konnte nicht in den Warenkorb legen (ACK not ok).');
-        setIsSaving(false);
-      }
+
+      // SUCCESS: Redirect to shop
+      console.log('[CFG][REDIRECT_TO_SHOP]', 'https://www.unbreak-one.com/shop');
+      window.location.href = 'https://www.unbreak-one.com/shop';
       
     } catch (error) {
       console.error('[CFG][ADD_TO_CART_FAILED]', error.message || error);
       setIsSaving(false);
-      setSaveError(error.message === 'ACK_TIMEOUT' 
-        ? 'Timeout: Keine Bestätigung vom Shop erhalten. Bitte erneut versuchen.'
-        : 'Hinzufügen zum Warenkorb fehlgeschlagen. Bitte erneut versuchen.'
-      );
+      setSaveError(error.message || 'Hinzufügen zum Warenkorb fehlgeschlagen. Bitte erneut versuchen.');
     }
   };
 

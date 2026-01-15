@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Test - ADD_TO_CART Listener</title>
+    <title>Shop Test - localStorage Cart Flow</title>
     <style>
         * {
             margin: 0;
@@ -196,10 +196,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🛒 Shop Test - ADD_TO_CART Listener</h1>
+            <h1>🛒 Shop Test - localStorage Cart Flow</h1>
             <div class="status">
                 <div class="status-indicator" id="status-indicator"></div>
-                <span id="status-text">Warte auf postMessage...</span>
+                <span id="status-text">Warte auf localStorage...</span>
             </div>
         </div>
 
@@ -334,11 +334,44 @@
         }
 
         // ============================================
-        // postMessage LISTENER
+        // STORAGE POLLING (Simulates Shop Page Load)
+        // ============================================
+        let lastChecked = null;
+
+        function checkForCartItem() {
+            try {
+                const item = localStorage.getItem('unbreak_configurator_cart_item');
+                
+                if (item && item !== lastChecked) {
+                    lastChecked = item;
+                    
+                    const cartItem = JSON.parse(item);
+                    log('📦 Cart Item in localStorage gefunden', cartItem);
+                    
+                    // Simulate adding to cart
+                    addToCart(cartItem.configuration);
+                    
+                    // Update status
+                    updateStatus(true, 'Produkt aus localStorage geladen ✓');
+                    
+                    // Clear localStorage (wie Shop es tun würde)
+                    localStorage.removeItem('unbreak_configurator_cart_item');
+                    log('🗑️ localStorage geleert (Item übernommen)');
+                }
+            } catch (err) {
+                log('❌ Error reading localStorage', { error: err.message });
+            }
+        }
+
+        // Poll every 500ms for new cart items
+        setInterval(checkForCartItem, 500);
+
+        // ============================================
+        // postMessage LISTENER (DEPRECATED - nur für Debugging)
         // ============================================
         window.addEventListener('message', (event) => {
             try {
-                log('📨 Message empfangen', {
+                log('📨 Message empfangen (DEPRECATED)', {
                     origin: event.origin,
                     type: event.data?.type,
                     data: event.data,
@@ -356,27 +389,8 @@
                     return;
                 }
 
-                // Handle ADD_TO_CART
-                if (event.data?.type === 'ADD_TO_CART') {
-                    log('🛒 ADD_TO_CART empfangen', event.data);
-
-                    // Add to cart
-                    addToCart(event.data.payload);
-
-                    // Update status
-                    updateStatus(true, 'Produkt hinzugefügt ✓');
-
-                    // Send ACK with matching requestId
-                    const ack = {
-                        type: 'ADD_TO_CART_ACK',
-                        requestId: event.data.requestId,
-                        ok: true,
-                        cartCount: cart.length,
-                    };
-
-                    event.source?.postMessage(ack, event.origin);
-                    log('✅ ACK gesendet', ack);
-                }
+                // NOTE: postMessage flow is DEPRECATED - localStorage is used instead
+                log('⚠️ postMessage empfangen, aber DEPRECATED (nutze localStorage)', event.data);
 
             } catch (err) {
                 log('❌ Error handling message', {
@@ -391,8 +405,11 @@
         // ============================================
         function updateStatus(isReady, text) {
             const indicator = document.getElementById('status-indicator');
-            const statusText = document.getElementById('status-text');
-
+            const statusText = docu (localStorage Flow)');
+        log('📡 Polling localStorage alle 500ms');
+        
+        // Initial check
+        checkForCartItem(
             if (isReady) {
                 indicator.classList.add('ready');
             } else {
