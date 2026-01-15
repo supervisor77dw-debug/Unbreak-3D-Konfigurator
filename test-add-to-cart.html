@@ -357,8 +357,8 @@
                 }
 
                 // Handle ADD_TO_CART
-                if (event.data?.type === 'UNBREAK_ONE_ADD_TO_CART') {
-                    log('🛒 ADD_TO_CART empfangen', event.data.payload);
+                if (event.data?.type === 'ADD_TO_CART') {
+                    log('🛒 ADD_TO_CART empfangen', event.data);
 
                     // Add to cart
                     addToCart(event.data.payload);
@@ -366,9 +366,10 @@
                     // Update status
                     updateStatus(true, 'Produkt hinzugefügt ✓');
 
-                    // Send ACK
+                    // Send ACK with matching requestId
                     const ack = {
-                        type: 'UNBREAK_ONE_ADD_TO_CART_ACK',
+                        type: 'ADD_TO_CART_ACK',
+                        requestId: event.data.requestId,
                         ok: true,
                         cartCount: cart.length,
                     };

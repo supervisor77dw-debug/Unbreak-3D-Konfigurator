@@ -96,15 +96,15 @@ function ConfiguratorContent() {
         lang: language,
       };
 
-      console.info('[CFG][CART] Adding to cart via postMessage', config);
+      console.log('[CFG][ADD_TO_CART_START]', config);
 
       // Send ADD_TO_CART message and wait for ACK
-      const result = await addToCart(config, urlParams.session);
+      // This will log: [CFG][POSTMSG_SEND] → [CFG][WAIT_ACK] → [CFG][ACK_RECEIVED] or [CFG][ACK_TIMEOUT]
+      const ack = await addToCart(config, urlParams.session);
       
-      console.info('[CFG][CART] Success - added to cart', result);
+      console.log('[CFG][ADD_TO_CART_SUCCESS]', ack);
       
-      // Optional: Save to backend (non-blocking)
-      // This is backup persistence, not critical for cart flow
+      // Optional: Save to backend (non-blocking, non-critical)
       try {
         const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
         const configJSON = buildConfigJSON({
@@ -131,17 +131,23 @@ function ConfiguratorContent() {
         console.warn('[CFG][API] Backend save failed (non-critical):', backendError.message);
       }
       
-      // SUCCESS: Cart updated, DO NOT REDIRECT
-      // Shop will handle showing cart drawer or navigating to cart
-      setIsSaving(false);
-      
-      // Optional: Show success message
-      // (You can add a success state to show "In den Warenkorb gelegt" overlay)
+      // SUCCESS: ACK received, redirect to cart
+      if (ack?.ok) {
+        console.log('[CFG][REDIRECT_TO_CART]');
+        window.location.href = 'https://www.unbreak-one.com/cart';
+      } else {
+        console.error('[CFG][ADD_TO_CART_FAILED_ACK]', ack);
+        setSaveError('Konnte nicht in den Warenkorb legen (ACK not ok).');
+        setIsSaving(false);
+      }
       
     } catch (error) {
-      console.error('[CFG][CART] Add to cart failed:', error.message || error);
+      console.error('[CFG][ADD_TO_CART_FAILED]', error.message || error);
       setIsSaving(false);
-      setSaveError(error.message || 'Hinzufügen zum Warenkorb fehlgeschlagen. Bitte erneut versuchen.');
+      setSaveError(error.message === 'ACK_TIMEOUT' 
+        ? 'Timeout: Keine Bestätigung vom Shop erhalten. Bitte erneut versuchen.'
+        : 'Hinzufügen zum Warenkorb fehlgeschlagen. Bitte erneut versuchen.'
+      );
     }
   };
 

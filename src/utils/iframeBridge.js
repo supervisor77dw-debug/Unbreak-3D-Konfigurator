@@ -361,135 +361,138 @@ export function clearDebugLog() {
 }
 
 // ============================================
-// ADD TO CART (postMessage)
+// ADD TO CART (postMessage) - STRICT VERSION
 // ============================================
 
 /**
+ * CRITICAL: Shop origin must use WWW (CORS requirement)
+ * WITHOUT www = 307 redirect = CORS block
+ */
+const SHOP_ORIGIN = 'https://www.unbreak-one.com';
+
+/**
+ * Get target window for postMessage
+ * Priority: iframe parent > popup opener > null
+ */
+function getShopTargetWindow() {
+    // 1) Iframe-case
+    if (window.parent && window.parent !== window) {
+        return window.parent;
+    }
+
+    // 2) Popup/new tab opened by shop
+    if (window.opener && !window.opener.closed) {
+        return window.opener;
+    }
+
+    // 3) Fallback: null (no target available)
+    return null;
+}
+
+/**
+ * Wait for ACK message from shop with matching requestId
+ * @param {string} requestId - Unique request identifier
+ * @param {number} timeoutMs - Timeout in milliseconds
+ * @returns {Promise<object>} Resolves with ACK data or rejects on timeout
+ */
+function waitForAck(requestId, timeoutMs = 2500) {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            window.removeEventListener('message', onMessage);
+            console.error('[CFG][ACK_TIMEOUT]', { requestId });
+            debugLog('ACK_TIMEOUT', { requestId, timeoutMs });
+            reject(new Error('ACK_TIMEOUT'));
+        }, timeoutMs);
+
+        function onMessage(event) {
+            // Origin muss exakt passen
+            if (event.origin !== SHOP_ORIGIN) {
+                return;
+            }
+
+            const data = event.data;
+            if (!data || typeof data !== 'object') {
+                return;
+            }
+
+            // ACK muss matchen
+            if (data.type === 'ADD_TO_CART_ACK' && data.requestId === requestId) {
+                clearTimeout(timeout);
+                window.removeEventListener('message', onMessage);
+                console.log('[CFG][ACK_RECEIVED]', data);
+                debugLog('ACK_RECEIVED', data);
+                resolve(data);
+            }
+        }
+
+        window.addEventListener('message', onMessage);
+        console.log('[CFG][WAIT_ACK]', { requestId, timeoutMs });
+        debugLog('WAIT_ACK', { requestId, timeoutMs });
+    });
+}
+
+/**
  * Send ADD_TO_CART message to shop and wait for ACK
- * Returns a Promise that resolves when ACK is received or rejects on timeout
- * 
  * @param {object} config - Configuration object with variant, colors, finish, quantity, locale
  * @param {string} sessionId - Optional session ID from URL params
- * @returns {Promise<object>} Resolves with { ok: true, cartCount: n } or rejects with error
+ * @returns {Promise<object>} Resolves with ACK data or rejects with error
  */
-export const addToCart = (config, sessionId = null) => {
-    return new Promise((resolve, reject) => {
-        // Determine target window and origin
-        let targetWindow = null;
-        let targetOrigin = null;
-        let openingMode = 'unknown';
-        
-        // Check opening mode
-        if (window.opener && !window.opener.closed) {
-            targetWindow = window.opener;
-            openingMode = 'popup';
-            debugLog('Opening mode: popup', { hasOpener: true });
-        } else if (window.parent !== window) {
-            targetWindow = window.parent;
-            openingMode = 'iframe';
-            debugLog('Opening mode: iframe', { hasParent: true });
-        } else {
-            // Same-window fallback (for debugging)
-            targetWindow = window;
-            openingMode = 'same-window';
-            debugLog('Opening mode: same-window (FALLBACK)', { warning: 'No parent or opener found' });
-        }
-        
-        // Get target origin
-        targetOrigin = getParentOrigin();
-        
-        debugLog('ADD_TO_CART preparation', {
-            openingMode,
-            targetOrigin,
-            hasTargetWindow: !!targetWindow,
-        });
-        
-        // Build message payload
-        const message = {
-            type: 'UNBREAK_ONE_ADD_TO_CART',
-            version: 1,
-            payload: {
-                variant: config.variant || config.product, // glass_holder | bottle_holder
-                quantity: config.quantity || 1,
-                locale: config.locale || config.lang || 'de',
-                colors: config.colors, // { base, arm, module, pattern }
-                finish: config.finish || 'matte',
-                configSessionId: sessionId,
-                priceCents: 0, // Shop recalculates
-            },
-        };
-        
-        debugLog('ADD_TO_CART message prepared', message);
-        
-        // Setup ACK listener
-        let ackReceived = false;
-        const ackTimeout = 2000; // 2 seconds
-        
-        const ackHandler = (event) => {
-            try {
-                if (!event?.data) return;
-                
-                // Check for ACK message
-                if (event.data.type === 'UNBREAK_ONE_ADD_TO_CART_ACK') {
-                    ackReceived = true;
-                    
-                    debugLog('ADD_TO_CART ACK received', event.data);
-                    console.info('[CFG][CART] ACK received', event.data);
-                    
-                    // Cleanup
-                    window.removeEventListener('message', ackHandler);
-                    clearTimeout(timeoutId);
-                    
-                    // Resolve promise
-                    if (event.data.ok) {
-                        resolve({
-                            ok: true,
-                            cartCount: event.data.cartCount || 1,
-                        });
-                    } else {
-                        reject(new Error(event.data.error || 'Add to cart failed'));
-                    }
-                }
-            } catch (err) {
-                debugLog('ADD_TO_CART ACK handler error', { error: err.message });
-                console.error('[CFG][CART] ACK handler error:', err);
-            }
-        };
-        
-        // Setup timeout
-        const timeoutId = setTimeout(() => {
-            if (!ackReceived) {
-                debugLog('ADD_TO_CART timeout (no ACK)', { timeoutMs: ackTimeout });
-                console.warn('[CFG][CART] Timeout - no ACK received');
-                window.removeEventListener('message', ackHandler);
-                reject(new Error('Timeout: Keine Bestätigung vom Shop erhalten'));
-            }
-        }, ackTimeout);
-        
-        // Register ACK listener
-        window.addEventListener('message', ackHandler);
-        
-        // Send message
-        try {
-            targetWindow.postMessage(message, targetOrigin);
-            
-            debugLog('ADD_TO_CART sent', {
-                targetOrigin,
-                openingMode,
-                payload: message.payload,
-            });
-            
-            console.info('[CFG][CART] Message sent', {
-                targetOrigin,
-                openingMode,
-                variant: message.payload.variant,
-            });
-        } catch (err) {
-            debugLog('ADD_TO_CART send failed', { error: err.message });
-            console.error('[CFG][CART] Send failed:', err);
-            window.removeEventListener('message', ackHandler);
-            clearTimeout(timeoutId);
-            reject(err);
-        }
+export const addToCart = async (config, sessionId = null) => {
+    const targetWindow = getShopTargetWindow();
+    const requestId = `cfg_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+    const message = {
+        type: 'ADD_TO_CART',
+        requestId,
+        payload: {
+            variant: config.variant || config.product, // glass_holder | bottle_holder
+            quantity: config.quantity || 1,
+            locale: config.locale || config.lang || 'de',
+            colors: config.colors, // { base, arm, module, pattern }
+            finish: config.finish || 'matte',
+            configSessionId: sessionId,
+            priceCents: 0, // Shop recalculates
+            returnUrl: `${SHOP_ORIGIN}/shop`, // WWW is mandatory
+        },
+        source: 'UNBREAK-ONE_CONFIGURATOR',
+        ts: Date.now(),
+    };
+
+    console.log('[CFG][POSTMSG_SEND]', {
+        SHOP_ORIGIN,
+        targetWindow: !!targetWindow,
+        message,
     });
+
+    debugLog('POSTMSG_SEND', {
+        SHOP_ORIGIN,
+        hasTargetWindow: !!targetWindow,
+        requestId,
+        variant: message.payload.variant,
+    });
+
+    if (!targetWindow) {
+        console.error('[CFG][POSTMSG_SEND_ERR] No target window found (parent/opener missing).');
+        debugLog('POSTMSG_SEND_ERR', { error: 'No target window' });
+        throw new Error('No shop window target found');
+    }
+
+    // ACK-Waiter: Setup BEFORE sending message
+    const ackPromise = waitForAck(requestId, 2500);
+
+    // Send message with strict targetOrigin
+    try {
+        targetWindow.postMessage(message, SHOP_ORIGIN);
+        console.log('[CFG][POSTMSG_SENT]', { requestId, SHOP_ORIGIN });
+        debugLog('POSTMSG_SENT', { requestId });
+    } catch (err) {
+        console.error('[CFG][POSTMSG_SEND_FAILED]', err);
+        debugLog('POSTMSG_SEND_FAILED', { error: err.message });
+        throw err;
+    }
+
+    // Wait for ACK
+    const ack = await ackPromise;
+
+    return ack;
 };
