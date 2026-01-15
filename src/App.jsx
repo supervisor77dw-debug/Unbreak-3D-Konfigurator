@@ -20,12 +20,12 @@ const generateSessionId = () => {
 
 /**
  * Allowed return origins (harte Allowlist)
- * CRITICAL: Production canonical domain is unbreak-one.com
+ * CRITICAL: Shop runs on www.unbreak-one.com (WITH www)
+ * WITHOUT www = 307 redirect = CORS block = broken
  */
 const ALLOWED_RETURN_ORIGINS = new Set([
-  'https://unbreak-one.com',           // Production canonical (PRIMARY)
-  'https://www.unbreak-one.com',       // Production www variant
-  'https://unbreak-one.vercel.app',    // Vercel production (fallback)
+  'https://www.unbreak-one.com',       // Production canonical (PRIMARY - CORS safe)
+  'https://unbreak-one.vercel.app',    // Vercel production (fallback only)
 ]);
 
 /**
@@ -37,8 +37,9 @@ const getURLParams = () => {
   const session = params.get('session') || generateSessionId();
   
   // Parse return parameter with validation
-  let returnUrl = 'https://unbreak-one.com/shop';
-  let returnOrigin = 'https://unbreak-one.com';
+  // CRITICAL: www.unbreak-one.com (WITH www) - NO redirect, NO CORS block
+  let returnUrl = 'https://www.unbreak-one.com/shop';
+  let returnOrigin = 'https://www.unbreak-one.com';
   
   const returnRaw = params.get('return');
   if (returnRaw) {
