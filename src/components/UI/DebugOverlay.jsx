@@ -4,7 +4,6 @@
  */
 import React, { useState, useEffect } from 'react';
 import { getDebugLog, clearDebugLog } from '../../utils/iframeBridge';
-import './DebugOverlay.module.css';
 
 const DebugOverlay = () => {
     const [isVisible, setIsVisible] = useState(false);
