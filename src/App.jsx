@@ -3,8 +3,10 @@ import { ConfiguratorProvider, buildConfigJSON } from './context/ConfiguratorCon
 import Scene from './components/3D/Scene';
 import TopBar from './components/UI/TopBar';
 import PanelHost from './components/UI/PanelHost';
+import DebugOverlay from './components/UI/DebugOverlay';
 import { useConfigurator } from './context/ConfiguratorContext';
 import { useLanguage } from './i18n/LanguageContext';
+import { addToCart } from './utils/iframeBridge';
 import './index.css';
 
 /**
@@ -82,63 +84,64 @@ function ConfiguratorContent() {
     setSaveError(null); // Clear previous errors
     setIsSaving(true);
     
-    // API endpoint derived from returnOrigin
-    const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
-    console.info('[CFG] save start url=', apiUrl);
-    
     try {
-      // Build configuration JSON
-      const configJSON = buildConfigJSON({
-        nextVariant: variant,
-        nextColors: colors,
-        nextFinish: finish,
-        nextQty: quantity,
+      // Build configuration for postMessage
+      const config = {
+        variant: variant,
+        product: variant,
+        colors: colors,
+        finish: finish,
+        quantity: quantity,
+        locale: language,
         lang: language,
-      });
-
-      // Prepare payload for API
-      const payload = {
-        sessionId: urlParams.session,
-        lang: language,
-        config: configJSON
       };
-      
-      // POST to config-session API (Shop is source of truth)
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        credentials: 'omit',
-      });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+      console.info('[CFG][CART] Adding to cart via postMessage', config);
+
+      // Send ADD_TO_CART message and wait for ACK
+      const result = await addToCart(config, urlParams.session);
+      
+      console.info('[CFG][CART] Success - added to cart', result);
+      
+      // Optional: Save to backend (non-blocking)
+      // This is backup persistence, not critical for cart flow
+      try {
+        const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
+        const configJSON = buildConfigJSON({
+          nextVariant: variant,
+          nextColors: colors,
+          nextFinish: finish,
+          nextQty: quantity,
+          lang: language,
+        });
+        
+        await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: urlParams.session,
+            lang: language,
+            config: configJSON
+          }),
+          credentials: 'omit',
+        });
+        
+        console.info('[CFG][API] Backend save successful');
+      } catch (backendError) {
+        console.warn('[CFG][API] Backend save failed (non-critical):', backendError.message);
       }
-
-      const data = await response.json();
       
-      if (!data.ok) {
-        throw new Error('Session save failed');
-      }
-
-      console.info('[CFG] save ok session=', urlParams.session);
-
-      // Build redirect URL with sessionId and preserve lang parameter
-      const url = new URL(urlParams.returnUrl);
-      url.searchParams.set('sessionId', urlParams.session);
-      url.searchParams.set('lang', language);
+      // SUCCESS: Cart updated, DO NOT REDIRECT
+      // Shop will handle showing cart drawer or navigating to cart
+      setIsSaving(false);
       
-      const redirectUrl = url.toString();
-      console.info('[CFG] redirect to=', redirectUrl);
-      
-      window.location.assign(redirectUrl);
+      // Optional: Show success message
+      // (You can add a success state to show "In den Warenkorb gelegt" overlay)
       
     } catch (error) {
-      console.error('[CFG] save failed reason=', error.message || error);
+      console.error('[CFG][CART] Add to cart failed:', error.message || error);
       setIsSaving(false);
-      setSaveError(error.message || 'Speichern fehlgeschlagen');
+      setSaveError(error.message || 'Hinzufügen zum Warenkorb fehlgeschlagen. Bitte erneut versuchen.');
     }
   };
 
@@ -212,6 +215,7 @@ function ConfiguratorContent() {
 function App() {
   return (
     <ConfiguratorProvider>
+      <DebugOverlay />
       <ConfiguratorContent />
     </ConfiguratorProvider>
   );

@@ -293,3 +293,203 @@ export const initTimeoutFallback = (timeoutMs = 12000) => {
         clearTimeout(timeoutId);
     };
 };
+
+// ============================================
+// DEBUG LOGGING
+// ============================================
+
+/**
+ * Debug logging to localStorage (survives redirects)
+ * Activated via ?debug=1 URL parameter
+ */
+const MAX_DEBUG_ENTRIES = 50;
+
+function isDebugMode() {
+    try {
+        return new URLSearchParams(window.location.search).get('debug') === '1';
+    } catch {
+        return false;
+    }
+}
+
+function debugLog(message, data = null) {
+    if (!isDebugMode()) return;
+    
+    try {
+        const log = JSON.parse(localStorage.getItem('unbreak_debug_log') || '[]');
+        const entry = {
+            timestamp: new Date().toISOString(),
+            message,
+            data: data ? JSON.stringify(data) : null,
+        };
+        
+        log.push(entry);
+        
+        // Keep only last MAX_DEBUG_ENTRIES entries (ringbuffer)
+        if (log.length > MAX_DEBUG_ENTRIES) {
+            log.shift();
+        }
+        
+        localStorage.setItem('unbreak_debug_log', JSON.stringify(log));
+        console.info('[DEBUG]', message, data);
+    } catch (err) {
+        console.error('[DEBUG] Failed to write debug log:', err);
+    }
+}
+
+/**
+ * Get debug log from localStorage
+ */
+export function getDebugLog() {
+    try {
+        return JSON.parse(localStorage.getItem('unbreak_debug_log') || '[]');
+    } catch {
+        return [];
+    }
+}
+
+/**
+ * Clear debug log
+ */
+export function clearDebugLog() {
+    try {
+        localStorage.removeItem('unbreak_debug_log');
+        console.info('[DEBUG] Log cleared');
+    } catch (err) {
+        console.error('[DEBUG] Failed to clear log:', err);
+    }
+}
+
+// ============================================
+// ADD TO CART (postMessage)
+// ============================================
+
+/**
+ * Send ADD_TO_CART message to shop and wait for ACK
+ * Returns a Promise that resolves when ACK is received or rejects on timeout
+ * 
+ * @param {object} config - Configuration object with variant, colors, finish, quantity, locale
+ * @param {string} sessionId - Optional session ID from URL params
+ * @returns {Promise<object>} Resolves with { ok: true, cartCount: n } or rejects with error
+ */
+export const addToCart = (config, sessionId = null) => {
+    return new Promise((resolve, reject) => {
+        // Determine target window and origin
+        let targetWindow = null;
+        let targetOrigin = null;
+        let openingMode = 'unknown';
+        
+        // Check opening mode
+        if (window.opener && !window.opener.closed) {
+            targetWindow = window.opener;
+            openingMode = 'popup';
+            debugLog('Opening mode: popup', { hasOpener: true });
+        } else if (window.parent !== window) {
+            targetWindow = window.parent;
+            openingMode = 'iframe';
+            debugLog('Opening mode: iframe', { hasParent: true });
+        } else {
+            // Same-window fallback (for debugging)
+            targetWindow = window;
+            openingMode = 'same-window';
+            debugLog('Opening mode: same-window (FALLBACK)', { warning: 'No parent or opener found' });
+        }
+        
+        // Get target origin
+        targetOrigin = getParentOrigin();
+        
+        debugLog('ADD_TO_CART preparation', {
+            openingMode,
+            targetOrigin,
+            hasTargetWindow: !!targetWindow,
+        });
+        
+        // Build message payload
+        const message = {
+            type: 'UNBREAK_ONE_ADD_TO_CART',
+            version: 1,
+            payload: {
+                variant: config.variant || config.product, // glass_holder | bottle_holder
+                quantity: config.quantity || 1,
+                locale: config.locale || config.lang || 'de',
+                colors: config.colors, // { base, arm, module, pattern }
+                finish: config.finish || 'matte',
+                configSessionId: sessionId,
+                priceCents: 0, // Shop recalculates
+            },
+        };
+        
+        debugLog('ADD_TO_CART message prepared', message);
+        
+        // Setup ACK listener
+        let ackReceived = false;
+        const ackTimeout = 2000; // 2 seconds
+        
+        const ackHandler = (event) => {
+            try {
+                if (!event?.data) return;
+                
+                // Check for ACK message
+                if (event.data.type === 'UNBREAK_ONE_ADD_TO_CART_ACK') {
+                    ackReceived = true;
+                    
+                    debugLog('ADD_TO_CART ACK received', event.data);
+                    console.info('[CFG][CART] ACK received', event.data);
+                    
+                    // Cleanup
+                    window.removeEventListener('message', ackHandler);
+                    clearTimeout(timeoutId);
+                    
+                    // Resolve promise
+                    if (event.data.ok) {
+                        resolve({
+                            ok: true,
+                            cartCount: event.data.cartCount || 1,
+                        });
+                    } else {
+                        reject(new Error(event.data.error || 'Add to cart failed'));
+                    }
+                }
+            } catch (err) {
+                debugLog('ADD_TO_CART ACK handler error', { error: err.message });
+                console.error('[CFG][CART] ACK handler error:', err);
+            }
+        };
+        
+        // Setup timeout
+        const timeoutId = setTimeout(() => {
+            if (!ackReceived) {
+                debugLog('ADD_TO_CART timeout (no ACK)', { timeoutMs: ackTimeout });
+                console.warn('[CFG][CART] Timeout - no ACK received');
+                window.removeEventListener('message', ackHandler);
+                reject(new Error('Timeout: Keine Bestätigung vom Shop erhalten'));
+            }
+        }, ackTimeout);
+        
+        // Register ACK listener
+        window.addEventListener('message', ackHandler);
+        
+        // Send message
+        try {
+            targetWindow.postMessage(message, targetOrigin);
+            
+            debugLog('ADD_TO_CART sent', {
+                targetOrigin,
+                openingMode,
+                payload: message.payload,
+            });
+            
+            console.info('[CFG][CART] Message sent', {
+                targetOrigin,
+                openingMode,
+                variant: message.payload.variant,
+            });
+        } catch (err) {
+            debugLog('ADD_TO_CART send failed', { error: err.message });
+            console.error('[CFG][CART] Send failed:', err);
+            window.removeEventListener('message', ackHandler);
+            clearTimeout(timeoutId);
+            reject(err);
+        }
+    });
+};

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Test - ADD_TO_CART Listener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f44336;
+        }
+
+        .status-indicator.ready {
+            background: #4CAF50;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+
+        .iframe-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .cart {
+            margin-bottom: 30px;
+        }
+
+        .cart h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .cart-items {
+            min-height: 100px;
+        }
+
+        .cart-item {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .cart-item-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .cart-item-details {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .cart-empty {
+            color: #999;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .log {
+            margin-top: 30px;
+        }
+
+        .log h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .log-container {
+            background: #1e1e1e;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(0, 255, 0, 0.05);
+            border-left: 3px solid #0f0;
+        }
+
+        .log-timestamp {
+            color: #0a0;
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .log-message {
+            color: #0f0;
+            margin-bottom: 4px;
+        }
+
+        .log-data {
+            margin-top: 4px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 3px;
+            color: #0c0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        .controls button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .controls button:hover {
+            background: #45a049;
+        }
+
+        .controls button.secondary {
+            background: #666;
+        }
+
+        .controls button.secondary:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 Shop Test - ADD_TO_CART Listener</h1>
+            <div class="status">
+                <div class="status-indicator" id="status-indicator"></div>
+                <span id="status-text">Warte auf postMessage...</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="iframe-container">
+                <iframe 
+                    id="configurator"
+                    src="http://localhost:5173/?debug=1&lang=de&return=http%3A%2F%2Flocalhost%3A5173%2Fshop"
+                    allow="autoplay; fullscreen"
+                ></iframe>
+            </div>
+
+            <div class="sidebar">
+                <div class="controls">
+                    <button onclick="clearCart()">Warenkorb leeren</button>
+                    <button onclick="clearLog()" class="secondary">Log leeren</button>
+                </div>
+
+                <div class="cart">
+                    <h2>Warenkorb (<span id="cart-count">0</span>)</h2>
+                    <div class="cart-items" id="cart-items">
+                        <div class="cart-empty">Warenkorb ist leer</div>
+                    </div>
+                </div>
+
+                <div class="log">
+                    <h2>Message Log</h2>
+                    <div class="log-container" id="log-container">
+                        <div class="log-entry">
+                            <div class="log-timestamp">System bereit</div>
+                            <div class="log-message">Warte auf postMessage vom Konfigurator...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // STATE
+        // ============================================
+        let cart = [];
+        const logEntries = [];
+
+        // ============================================
+        // LOGGING
+        // ============================================
+        function log(message, data = null) {
+            const timestamp = new Date().toLocaleTimeString('de-DE', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                fractionalSecondDigits: 3,
+            });
+
+            logEntries.push({ timestamp, message, data });
+
+            const logContainer = document.getElementById('log-container');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+
+            entry.innerHTML = `
+                <div class="log-timestamp">${timestamp}</div>
+                <div class="log-message">${message}</div>
+                ${data ? `<div class="log-data">${JSON.stringify(data, null, 2)}</div>` : ''}
+            `;
+
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            console.log('[SHOP]', message, data);
+        }
+
+        function clearLog() {
+            const logContainer = document.getElementById('log-container');
+            logContainer.innerHTML = '';
+            logEntries.length = 0;
+            log('Log geleert');
+        }
+
+        // ============================================
+        // CART
+        // ============================================
+        function addToCart(item) {
+            cart.push(item);
+            updateCartUI();
+            log('✅ Zum Warenkorb hinzugefügt', item);
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartUI();
+            log('🗑️ Warenkorb geleert');
+        }
+
+        function updateCartUI() {
+            const cartItems = document.getElementById('cart-items');
+            const cartCount = document.getElementById('cart-count');
+
+            cartCount.textContent = cart.length;
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="cart-empty">Warenkorb ist leer</div>';
+                return;
+            }
+
+            cartItems.innerHTML = cart.map((item, idx) => `
+                <div class="cart-item">
+                    <div class="cart-item-title">${idx + 1}. ${getProductName(item.variant)}</div>
+                    <div class="cart-item-details">
+                        <strong>Farben:</strong><br>
+                        ${Object.entries(item.colors).map(([part, color]) => 
+                            `${part}: ${color}`
+                        ).join('<br>')}
+                    </div>
+                    <div class="cart-item-details">
+                        <strong>Finish:</strong> ${item.finish}<br>
+                        <strong>Menge:</strong> ${item.quantity}<br>
+                        <strong>Sprache:</strong> ${item.locale}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getProductName(variant) {
+            const names = {
+                glass_holder: '🍷 Glashalter (4-teilig)',
+                bottle_holder: '🍾 Flaschenhalter (2-teilig)',
+            };
+            return names[variant] || variant;
+        }
+
+        // ============================================
+        // postMessage LISTENER
+        // ============================================
+        window.addEventListener('message', (event) => {
+            try {
+                log('📨 Message empfangen', {
+                    origin: event.origin,
+                    type: event.data?.type,
+                    data: event.data,
+                });
+
+                // Origin check (in production: strict whitelist)
+                const allowedOrigins = [
+                    'http://localhost:5173',
+                    'http://127.0.0.1:5173',
+                    'https://unbreak-3-d-konfigurator.vercel.app',
+                ];
+
+                if (!allowedOrigins.includes(event.origin)) {
+                    log('⚠️ BLOCKED: Unknown origin', { origin: event.origin });
+                    return;
+                }
+
+                // Handle ADD_TO_CART
+                if (event.data?.type === 'UNBREAK_ONE_ADD_TO_CART') {
+                    log('🛒 ADD_TO_CART empfangen', event.data.payload);
+
+                    // Add to cart
+                    addToCart(event.data.payload);
+
+                    // Update status
+                    updateStatus(true, 'Produkt hinzugefügt ✓');
+
+                    // Send ACK
+                    const ack = {
+                        type: 'UNBREAK_ONE_ADD_TO_CART_ACK',
+                        ok: true,
+                        cartCount: cart.length,
+                    };
+
+                    event.source?.postMessage(ack, event.origin);
+                    log('✅ ACK gesendet', ack);
+                }
+
+            } catch (err) {
+                log('❌ Error handling message', {
+                    error: err.message,
+                    stack: err.stack,
+                });
+            }
+        });
+
+        // ============================================
+        // STATUS
+        // ============================================
+        function updateStatus(isReady, text) {
+            const indicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+
+            if (isReady) {
+                indicator.classList.add('ready');
+            } else {
+                indicator.classList.remove('ready');
+            }
+
+            statusText.textContent = text;
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        log('🚀 Shop Test gestartet');
+        log('📡 Listening auf:', window.location.origin);
+
+    </script>
+</body>
+</html>
