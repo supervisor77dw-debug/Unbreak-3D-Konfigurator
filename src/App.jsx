@@ -20,6 +20,33 @@ const generateSessionId = () => {
 };
 
 /**
+ * Language Detection (CRITICAL for v1.1)
+ * Priority: URL ?lang= → localStorage → html lang → default 'de'
+ */
+function detectLanguage() {
+  // 1. URL parameter (highest priority)
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('lang')) {
+    return params.get('lang') === 'en' ? 'en' : 'de';
+  }
+
+  // 2. localStorage
+  const stored = localStorage.getItem('unbreakone_lang');
+  if (stored === 'en' || stored === 'de') {
+    return stored;
+  }
+
+  // 3. HTML lang attribute
+  const htmlLang = document.documentElement.lang || '';
+  if (htmlLang.toLowerCase().startsWith('en')) {
+    return 'en';
+  }
+
+  // 4. Default
+  return 'de';
+}
+
+/**
  * Allowed return origins (harte Allowlist)
  * CRITICAL: Shop runs on www.unbreak-one.com (WITH www)
  * WITHOUT www = 307 redirect = CORS block = broken
@@ -84,20 +111,34 @@ function ConfiguratorContent() {
     setIsSaving(true);
     
     try {
-      console.log('[CFG][ADD_TO_CART_START]', { variant, colors, finish, quantity, language });
+      // CRITICAL: Detect language (v1.1 requirement)
+      const detectedLang = detectLanguage();
+      console.log('[CFG][ADD_TO_CART_START]', { 
+        variant, 
+        colors, 
+        finish, 
+        quantity, 
+        contextLang: language,
+        detectedLang,
+      });
 
       // Build cart item for URL parameter (cross-domain safe)
+      // CRITICAL: lang field MUST be included (v1.1)
       const cartItem = {
         source: 'configurator',
         product_id: 'glass_configurator',
         sku: variant === 'glass_holder' ? 'UNBREAK-GLAS-CONFIG' : 'UNBREAK-FLASCHE-CONFIG',
-        name: language === 'de' 
+        name: detectedLang === 'de' 
           ? (variant === 'glass_holder' ? 'Individueller Glashalter' : 'Individueller Flaschenhalter')
           : (variant === 'glass_holder' ? 'Custom Glass Holder' : 'Custom Bottle Holder'),
         quantity: quantity,
-        price_cents: 1990, // Shop will recalculate
+        price_cents: 3900, // Shop will recalculate (updated price)
         currency: 'EUR',
         configured: true,
+        
+        // CRITICAL v1.1: lang field for Cart/Checkout/Stripe/Emails
+        lang: detectedLang,
+        
         config: {
           variant: variant,
           colors: {
@@ -108,11 +149,26 @@ function ConfiguratorContent() {
           },
           finish: finish,
         },
-        locale: language,
-        timestamp: Date.now(),
+        
+        // Redundant but safe (fallback)
+        meta: {
+          lang: detectedLang,
+          source: 'configurator',
+          timestamp: new Date().toISOString(),
+        },
+        
+        // Legacy field (compatibility)
+        locale: detectedLang,
       };
 
-      console.log('[CFG][CART_ITEM_BUILT]', cartItem);
+      // CRITICAL: Log lang field for verification
+      console.log('[CFG][CART_ITEM_BUILT]', {
+        product_id: cartItem.product_id,
+        sku: cartItem.sku,
+        lang: cartItem.lang,
+        price_cents: cartItem.price_cents,
+        name: cartItem.name,
+      });
 
       // Encode for URL parameter (cross-domain safe)
       try {
@@ -120,6 +176,7 @@ function ConfiguratorContent() {
         const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(json))));
         
         console.log('[CFG][ENCODED_LEN]', encoded.length);
+        console.log('[CFG][LANG_VERIFICATION]', { lang: cartItem.lang, meta_lang: cartItem.meta.lang });
 
         // Check URL length limit
         if (encoded.length > 1500) {

@@ -67,9 +67,13 @@ const cartItem = {
   sku: 'UNBREAK-GLAS-CONFIG',
   name: 'Individueller Glashalter',
   quantity: 1,
-  price_cents: 1990,  // Integer! Shop recalculates
+  price_cents: 3900,  // Integer! Shop recalculates
   currency: 'EUR',
   configured: true,
+  
+  // CRITICAL v1.1: lang field REQUIRED for Cart/Checkout/Stripe/Emails
+  lang: 'de',  // 'de' | 'en'
+  
   config: {
     variant: 'glass_holder',
     colors: {
@@ -80,10 +84,24 @@ const cartItem = {
     },
     finish: 'matte'
   },
+  
+  // Redundant but safe (fallback)
+  meta: {
+    lang: 'de',
+    source: 'configurator',
+    timestamp: '2026-01-16T10:30:00.000Z'
+  },
+  
+  // Legacy field (compatibility)
   locale: 'de',
-  timestamp: 1736966123456
 };
 ```
+
+**CRITICAL v1.1 Requirements:**
+- ✅ `lang` field MUST be present (`'de'` | `'en'`)
+- ✅ Used for Cart UI, Checkout UI, Stripe locale, Email language
+- ✅ Detection priority: URL `?lang=` → localStorage → HTML lang → default `'de'`
+- ✅ `meta.lang` optional redundant fallback
 
 ### URL Parameter Format
 
@@ -146,6 +164,15 @@ useEffect(() => {
         throw new Error('Invalid source');
       }
       
+      // CRITICAL v1.1: Validate lang field
+      if (!item?.lang || !['de', 'en'].includes(item.lang)) {
+        console.warn('[SHOP][CONFIGURATOR_MISSING_LANG] Fallback required', { item });
+        // Fallback to current site language
+        item.lang = getCurrentSiteLanguage(); // Must implement
+      }
+      
+      console.log('[SHOP][CONFIGURATOR_LANG_VERIFIED]', { lang: item.lang });
+      
       // Normalize for cart
       const normalizedItem = normalizeConfiguratorItem(item);
       
@@ -179,13 +206,17 @@ function normalizeConfiguratorItem(item) {
   return {
     id: `configurator_${configHash}`,
     productId: item.product_id,
-    sku: item.sku,
-    name: item.name,
-    quantity: item.quantity,
+    skuCRITICAL v1.1: lang for Checkout/Stripe/Emails
+    lang: item.lang || 'de', // With fallback
     
-    // CRITICAL: Shop recalculates price (don't trust URL param)
-    price: calculateConfiguratorPrice(item.config), // NOT item.price_cents!
-    
+    // Store configuration as metadata
+    metadata: {
+      source: 'configurator',
+      configured: true,
+      config: item.config,
+      lang: item.lang, // Redundant but safe
+      locale: item.locale,
+      timestamp: item.meta?.timestamp || new Date().toISOString()
     currency: item.currency || 'EUR',
     
     // Store configuration as metadata
@@ -266,7 +297,12 @@ function validateConfiguratorItem(item) {
     throw new Error('Invalid quantity');
   }
   
-  if (!Number.isInteger(item?.price_cents) || item.price_cents < 0) {
+  if CRITICAL v1.1: Validate lang field
+  if (!item?.lang || !['de', 'en'].includes(item.lang)) {
+    throw new Error('Invalid or missing lang field');
+  }
+  
+  // (!Number.isInteger(item?.price_cents) || item.price_cents < 0) {
     throw new Error('Invalid price');
   }
   
