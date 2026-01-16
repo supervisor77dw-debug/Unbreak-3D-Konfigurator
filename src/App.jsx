@@ -47,51 +47,33 @@ function detectLanguage() {
 }
 
 /**
- * Allowed return origins (harte Allowlist)
- * CRITICAL: Shop runs on www.unbreak-one.com (WITH www)
- * WITHOUT www = 307 redirect = CORS block = broken
- */
-const ALLOWED_RETURN_ORIGINS = new Set([
-  'https://www.unbreak-one.com',       // Production canonical (PRIMARY - CORS safe)
-  'https://unbreak-one.vercel.app',    // Vercel production (fallback only)
-]);
-
-/**
  * Parse URL parameters
+ * CRITICAL v1.1: shop_origin and return_path from URL (Preview support)
  */
 const getURLParams = () => {
   const params = new URLSearchParams(window.location.search);
   const lang = params.get('lang') || 'de';
   const session = params.get('session') || generateSessionId();
   
-  // Parse return parameter with validation
-  // CRITICAL: www.unbreak-one.com (WITH www) - NO redirect, NO CORS block
-  let returnUrl = 'https://www.unbreak-one.com/shop';
-  let returnOrigin = 'https://www.unbreak-one.com';
-  
-  const returnRaw = params.get('return');
-  if (returnRaw) {
-    try {
-      const decoded = decodeURIComponent(returnRaw);
-      const parsedUrl = new URL(decoded);
-      const origin = parsedUrl.origin;
-      
-      // Validate against allowlist
-      if (ALLOWED_RETURN_ORIGINS.has(origin)) {
-        returnUrl = decoded;
-        returnOrigin = origin;
-      } else {
-        console.warn('[CFG][BOOT] Invalid return origin, using fallback:', origin);
-      }
-    } catch (err) {
-      console.warn('[CFG][BOOT] Invalid return URL, using fallback:', returnRaw);
-    }
-  }
+  // CRITICAL: Dynamic shop_origin & return_path (Preview support)
+  // Shop passes these when opening configurator
+  const shopOrigin = params.get('shop_origin') || 'https://www.unbreak-one.com';
+  const returnPath = params.get('return_path') || '/shop';
   
   // Log boot info
-  console.info('[CFG][BOOT]', { lang, returnUrl, returnOrigin });
+  console.info('[CFG][BOOT]', { 
+    lang, 
+    shopOrigin, 
+    returnPath,
+    session 
+  });
   
-  return { lang, session, returnUrl, returnOrigin };
+  return { 
+    lang, 
+    session, 
+    shopOrigin, 
+    returnPath 
+  };
 };
 
 function ConfiguratorContent() {
@@ -186,13 +168,13 @@ function ConfiguratorContent() {
 
         // Optional: Save to backend (non-blocking backup)
         try {
-          const apiUrl = `${urlParams.returnOrigin}/api/config-session`;
+          const apiUrl = `${urlParams.shopOrigin}/api/config-session`;
           const configJSON = buildConfigJSON({
             nextVariant: variant,
             nextColors: colors,
             nextFinish: finish,
             nextQty: quantity,
-            lang: language,
+            lang: detectedLang,
           });
           
           await fetch(apiUrl, {
@@ -200,7 +182,7 @@ function ConfiguratorContent() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               sessionId: urlParams.session,
-              lang: language,
+              lang: detectedLang,
               config: configJSON
             }),
             credentials: 'omit',
@@ -211,8 +193,9 @@ function ConfiguratorContent() {
           console.warn('[CFG][API] Backend save failed (non-critical):', backendError.message);
         }
 
-        // Redirect to shop with URL parameter
-        const shopUrl = `https://www.unbreak-one.com/shop?cfg=${encoded}&lang=${language}`;
+        // CRITICAL v1.1: Dynamic redirect (Preview support)
+        // Use shop_origin & return_path from URL params (NO hardcoded Production)
+        const shopUrl = `${urlParams.shopOrigin}${urlParams.returnPath}?cfg=${encoded}&lang=${detectedLang}`;
         console.log('[CFG][REDIRECT_TO_SHOP]', shopUrl);
         
         window.location.href = shopUrl;
@@ -242,7 +225,7 @@ function ConfiguratorContent() {
         onPanelToggle={setActivePanel}
         variant={variant}
         setVariant={setVariant}
-        returnUrl={urlParams.returnUrl}
+        returnUrl={`${urlParams.shopOrigin}${urlParams.returnPath}`}
       />
       
       {/* Error Banner */}
