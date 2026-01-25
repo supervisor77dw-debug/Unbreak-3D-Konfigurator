@@ -226,6 +226,9 @@ function ConfiguratorContent() {
         variant={variant}
         setVariant={setVariant}
         returnUrl={`${urlParams.shopOrigin}${urlParams.returnPath}`}
+        onAddToCart={handleSaveAndReturn}
+        isSaving={isSaving}
+        cartCount={0}
       />
       
       {/* Error Banner */}
