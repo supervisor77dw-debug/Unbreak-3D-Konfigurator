@@ -1,11 +1,24 @@
 // [SYNC 2025-12-24] Added Auto-Fit Camera to Model
-import React, { useRef, useMemo, useEffect } from 'react';
+// [FIX 2026-01-25] Added invalidate() for frameloop="demand" color updates
+import React, { useRef, useMemo, useEffect, useCallback } from 'react';
 import { useConfigurator } from '../../context/ConfiguratorContext';
 import { useGLTF } from '@react-three/drei';
-import { useThree, useFrame } from '@react-three/fiber';
+import { useThree, useFrame, invalidate } from '@react-three/fiber';
 import { getObfuscatedScale, obfuscateGeometry } from '../../utils/obfuscation';
-import { isDebugUIEnabled } from '../../config/debug';
+import { isDebugUIEnabled, isDebug3DEnabled } from '../../config/debug';
 import * as THREE from 'three';
+
+// Initialize debug3d global state
+if (typeof window !== 'undefined') {
+    window.__debug3d = window.__debug3d || {
+        colors: {},
+        invalidateCalls: 0,
+        frameCount: 0,
+        lastColorChange: null,
+        rendererInfo: {},
+        isAnimating: false,
+    };
+}
 
 /**
  * EaseOutCubic easing function for smooth animations
@@ -122,12 +135,14 @@ const ASSETS = {
 };
 
 // Part loader with premium material refinement and smooth color transitions
-const Part = ({ url, color, renderOrder = 0, smoothNormals = false, isFixedBlack = false, isAccent = false }) => {
+// FIX: Added invalidate() support for frameloop="demand" mode
+const Part = ({ url, color, renderOrder = 0, smoothNormals = false, isFixedBlack = false, isAccent = false, onColorAnimating }) => {
     const { scene } = useGLTF(url);
     const clone = useMemo(() => scene.clone(), [scene]);
     const materialRef = useRef();
     const targetColor = useMemo(() => new THREE.Color(color), [color]);
-    const currentColor = useMemo(() => new THREE.Color(color), []);
+    const currentColor = useRef(new THREE.Color(color));
+    const isAnimating = useRef(false);
 
     // Create a shared premium material
     const premiumMaterial = useMemo(() => {
@@ -176,14 +191,55 @@ const Part = ({ url, color, renderOrder = 0, smoothNormals = false, isFixedBlack
         });
     }, [clone, premiumMaterial, renderOrder, smoothNormals]);
 
-    // Smooth Color Animation
+    // Smooth Color Animation with invalidate() for frameloop="demand"
     useFrame((state, delta) => {
         if (materialRef.current && !isFixedBlack) {
-            // Smoothly lerp to target color
-            currentColor.lerp(targetColor, delta * 4); // delta * 4 for smooth but snappy feel
-            materialRef.current.color.copy(currentColor);
+            // Check if color needs animation
+            const distance = currentColor.current.distanceTo(targetColor);
+            
+            if (distance > 0.001) {
+                // Smoothly lerp to target color
+                currentColor.current.lerp(targetColor, Math.min(delta * 6, 0.3)); // Slightly faster for snappier feel
+                materialRef.current.color.copy(currentColor.current);
+                
+                // CRITICAL: Request next frame for frameloop="demand"
+                // This ensures smooth animation even without camera movement
+                invalidate();
+                
+                // Debug tracking
+                if (window.__debug3d) {
+                    window.__debug3d.invalidateCalls++;
+                    window.__debug3d.frameCount++;
+                    window.__debug3d.isAnimating = true;
+                }
+                
+                if (!isAnimating.current) {
+                    isAnimating.current = true;
+                    onColorAnimating?.(true);
+                }
+            } else if (isAnimating.current) {
+                // Animation complete - snap to exact color
+                currentColor.current.copy(targetColor);
+                materialRef.current.color.copy(targetColor);
+                isAnimating.current = false;
+                onColorAnimating?.(false);
+                
+                // Debug tracking
+                if (window.__debug3d) {
+                    window.__debug3d.isAnimating = false;
+                }
+                
+                // One final render to ensure clean state
+                invalidate();
+            }
         }
     });
+
+    // CRITICAL: Trigger initial render when color prop changes
+    useEffect(() => {
+        // Force immediate re-render when color changes
+        invalidate();
+    }, [color]);
 
     return <primitive object={clone} />;
 };
@@ -355,6 +411,32 @@ const ConfiguratorModel = () => {
         const baseScale = 0.06; // 0.1 (ursprünglich) × 0.6 = 0.06 = 60%
         return [obfuscatedScale[0] * baseScale, obfuscatedScale[1] * baseScale, obfuscatedScale[2] * baseScale];
     }, [obfuscatedScale]);
+
+    // CRITICAL: Force re-render when colors change (for frameloop="demand")
+    useEffect(() => {
+        // Update debug tracking
+        if (window.__debug3d) {
+            window.__debug3d.colors = {
+                base: baseplateColor,
+                arm: armColor,
+                insert: insertColor,
+                pattern: patternColor,
+            };
+            window.__debug3d.lastColorChange = Date.now();
+            window.__debug3d.frameCount = 0; // Reset frame count on color change
+        }
+        
+        // Trigger render burst when colors change
+        invalidate();
+        
+        // Schedule additional frames to ensure smooth transition
+        const frameIds = [];
+        for (let i = 1; i <= 10; i++) {
+            frameIds.push(setTimeout(() => invalidate(), i * 16)); // ~60fps for 160ms
+        }
+        
+        return () => frameIds.forEach(id => clearTimeout(id));
+    }, [baseplateColor, armColor, insertColor, patternColor]);
 
     if (variant === 'bottle_holder') {
         return (

@@ -4,6 +4,7 @@ import Scene from './components/3D/Scene';
 import TopBar from './components/UI/TopBar';
 import PanelHost from './components/UI/PanelHost';
 import DebugOverlay from './components/UI/DebugOverlay';
+import Debug3DOverlay from './components/UI/Debug3DOverlay';
 import { useConfigurator } from './context/ConfiguratorContext';
 import { useLanguage } from './i18n/LanguageContext';
 import './index.css';
@@ -286,6 +287,7 @@ function App() {
   return (
     <ConfiguratorProvider>
       <DebugOverlay />
+      <Debug3DOverlay />
       <ConfiguratorContent />
     </ConfiguratorProvider>
   );

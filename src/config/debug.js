@@ -27,6 +27,16 @@ export const isDebugUIEnabled = () => {
 };
 
 /**
+ * Check if 3D debug mode is enabled (?debug3d=1)
+ * Shows detailed color/material/render information
+ * @returns {boolean} True if 3D debug is enabled
+ */
+export const isDebug3DEnabled = () => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('debug3d') === '1';
+};
+
+/**
  * Log debug message (always allowed, only controls UI)
  * @param {string} message - Debug message
  * @param {*} data - Optional data to log
