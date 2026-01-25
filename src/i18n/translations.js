@@ -67,6 +67,7 @@ export const translations = {
             exportTitle: 'Konfiguration',
             copyToClipboard: 'Kopieren',
             backToShop: 'Zurück zum Shop',
+            backShort: 'Zurück',
         },
         
         // Modules
@@ -144,6 +145,7 @@ export const translations = {
             exportTitle: 'Configuration',
             copyToClipboard: 'Copy',
             backToShop: 'Back to Shop',
+            backShort: 'Back',
         },
         
         // Modules
