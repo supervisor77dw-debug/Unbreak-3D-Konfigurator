@@ -1,22 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './TopBar.module.css';
 
 const TopBar = ({ activePanel, onPanelToggle, variant, setVariant, returnUrl, onAddToCart, isSaving, cartCount = 0 }) => {
     const { t, language, setLanguage } = useLanguage();
-    const [isSmallScreen, setIsSmallScreen] = useState(false);
-
-    // Detect screen size for dynamic aria-labels
-    useEffect(() => {
-        const checkScreenSize = () => {
-            setIsSmallScreen(window.innerWidth <= 420);
-        };
-
-        checkScreenSize();
-        window.addEventListener('resize', checkScreenSize);
-        return () => window.removeEventListener('resize', checkScreenSize);
-    }, []);
-
+    
     const handlePanelClick = (panel) => {
         onPanelToggle(activePanel === panel ? null : panel);
     };
@@ -32,18 +20,8 @@ const TopBar = ({ activePanel, onPanelToggle, variant, setVariant, returnUrl, on
         setLanguage(newLang);
     };
 
-    // Dynamic aria-label for back button (icon-only on small screens)
-    const backAriaLabel = isSmallScreen 
-        ? (t('ui.backToShop') || 'Zur¸ck zum Shop')
-        : null;
-
-    // Dynamic aria-label for cart button (icon-only on medium screens)
-    const cartAriaLabel = window.innerWidth <= 500 
-        ? (t('ui.addToCart') || 'In den Warenkorb')
-        : null;
-
     return (
-        <header className={styles.topBar} role="banner">
+        <header className={styles.topBar}>
             {/* Row 1: Back + Cart (+ Lang on desktop) */}
             <div className={styles.row1}>
                 {/* Left: Back Button */}
@@ -51,12 +29,12 @@ const TopBar = ({ activePanel, onPanelToggle, variant, setVariant, returnUrl, on
                     <button
                         className={styles.backBtn}
                         onClick={handleBackToShop}
-                        aria-label={backAriaLabel || (t('ui.backToShop') || 'Zur¸ck zum Shop')}
-                        title={t('ui.backToShop') || 'Zur¸ck zum Shop'}
+                        aria-label={t('ui.backToShop') || 'Zur√ºck zum Shop'}
+                        title={t('ui.backToShop') || 'Zur√ºck zum Shop'}
                     >
-                        <span className={styles.backIcon} aria-hidden="true"></span>
-                        <span className={styles.backLabelFull}>{t('ui.backToShop') || 'Zur¸ck zum Shop'}</span>
-                        <span className={styles.backLabelMedium}>{t('ui.backShort') || 'Zur¸ck'}</span>
+                        <span className={styles.backIcon} aria-hidden="true">‚Üê</span>
+                        <span className={styles.backLabelFull}>{t('ui.backToShop') || 'Zur√ºck zum Shop'}</span>
+                        <span className={styles.backLabelMedium}>{t('ui.backShort') || 'Zur√ºck'}</span>
                     </button>
                 </div>
 
@@ -79,62 +57,53 @@ const TopBar = ({ activePanel, onPanelToggle, variant, setVariant, returnUrl, on
                         className={styles.cartBtn}
                         onClick={onAddToCart}
                         disabled={isSaving}
-                        aria-label={cartAriaLabel || (t('ui.addToCart') || 'In den Warenkorb')}
-                        title={t('ui.addToCart') || 'In den Warenkorb'}
+                        aria-label={t('ui.addToCart')}
                     >
-                        <span className={styles.cartIcon} aria-hidden="true"></span>
+                        <span className={styles.cartIcon}>üõí</span>
                         <span className={styles.cartLabel}>{isSaving ? t('ui.loading') : t('ui.addToCart')}</span>
                         {cartCount > 0 && (
-                            <span className={styles.cartBadge} aria-label={`${cartCount} items in cart`}>{cartCount}</span>
+                            <span className={styles.cartBadge}>{cartCount}</span>
                         )}
                     </button>
                 </div>
             </div>
 
             {/* Row 2: Variant Tabs + Actions (+ Lang on mobile) */}
-            <nav className={styles.row2} aria-label={t('ui.navigation') || 'Navigation'}>
+            <div className={styles.row2}>
                 {/* Variant Toggle */}
-                <div className={styles.variantToggle} role="group" aria-label={t('ui.selectProduct') || 'Produkt w‰hlen'}>
+                <div className={styles.variantToggle}>
                     <button
                         className={`${styles.variantBtn} ${variant === 'glass_holder' ? styles.active : ''}`}
                         onClick={() => setVariant('glass_holder')}
-                        aria-label={t('products.glass_holder') || 'Glashalter'}
-                        aria-pressed={variant === 'glass_holder'}
                     >
                         <span className={styles.variantLabelFull}>{t('products.glass_holder')}</span>
-                        <span className={styles.variantLabelShort} aria-hidden="true"></span>
+                        <span className={styles.variantLabelShort}>üç∑</span>
                     </button>
                     <button
                         className={`${styles.variantBtn} ${variant === 'bottle_holder' ? styles.active : ''}`}
                         onClick={() => setVariant('bottle_holder')}
-                        aria-label={t('products.bottle_holder') || 'Flaschenhalter'}
-                        aria-pressed={variant === 'bottle_holder'}
                     >
                         <span className={styles.variantLabelFull}>{t('products.bottle_holder')}</span>
-                        <span className={styles.variantLabelShort} aria-hidden="true"></span>
+                        <span className={styles.variantLabelShort}>üçæ</span>
                     </button>
                 </div>
 
                 {/* Action Buttons */}
-                <div className={styles.actionGroup} role="group" aria-label={t('ui.actions') || 'Aktionen'}>
+                <div className={styles.actionGroup}>
                     <button
                         className={`${styles.actionBtn} ${activePanel === 'colors' ? styles.activePanel : ''}`}
                         onClick={() => handlePanelClick('colors')}
-                        aria-label={t('ui.colors') || 'Farben'}
-                        aria-pressed={activePanel === 'colors'}
-                        title={t('ui.colors') || 'Farben'}
+                        aria-label={t('ui.colors')}
                     >
-                        <span className={styles.icon} aria-hidden="true"></span>
+                        <span className={styles.icon}>üé®</span>
                         <span className={styles.label}>{t('ui.colors')}</span>
                     </button>
                     <button
                         className={`${styles.actionBtn} ${activePanel === 'actions' ? styles.activePanel : ''}`}
                         onClick={() => handlePanelClick('actions')}
-                        aria-label={t('ui.actions') || 'Einstellungen'}
-                        aria-pressed={activePanel === 'actions'}
-                        title={t('ui.settings') || 'Einstellungen'}
+                        aria-label={t('ui.actions')}
                     >
-                        <span className={styles.icon} aria-hidden="true"></span>
+                        <span className={styles.icon}>‚öôÔ∏è</span>
                         <span className={styles.label}>{t('ui.actions')}</span>
                     </button>
 
@@ -143,14 +112,13 @@ const TopBar = ({ activePanel, onPanelToggle, variant, setVariant, returnUrl, on
                         className={`${styles.langToggle} ${styles.mobileOnly}`}
                         onClick={toggleLanguage}
                         aria-label={language === 'de' ? 'Switch to English' : 'Zu Deutsch wechseln'}
-                        title={language === 'de' ? 'Switch to English' : 'Zu Deutsch wechseln'}
                     >
                         <span className={`${styles.langOption} ${language === 'de' ? styles.langActive : ''}`}>DE</span>
-                        <span className={styles.langDivider} aria-hidden="true">/</span>
+                        <span className={styles.langDivider}>/</span>
                         <span className={`${styles.langOption} ${language === 'en' ? styles.langActive : ''}`}>EN</span>
                     </button>
                 </div>
-            </nav>
+            </div>
         </header>
     );
 };

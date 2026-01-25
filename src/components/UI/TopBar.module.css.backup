@@ -1,6 +1,4 @@
-/* TopBar.module.css - OPTIMIZED Responsive 2-Row Layout */
-/* FIX: Mobile Header Lighthouse Optimierungen */
-/* Version: 2026-01-25 */
+/* TopBar.module.css - Responsive 2-Row Layout */
 
 /* ========================================
    BASE CONTAINER
@@ -28,8 +26,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px clamp(0.5rem, 2vw, 1rem);
-    gap: clamp(8px, 2vw, 16px); /* OPTIMIZED: responsive gap */
+    padding: 8px 1rem;
+    gap: 12px;
     min-height: 52px;
 }
 
@@ -40,8 +38,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px clamp(0.5rem, 2vw, 1rem) 10px;
-    gap: clamp(8px, 2vw, 16px); /* OPTIMIZED: responsive gap */
+    padding: 6px 1rem 10px;
+    gap: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -52,16 +50,14 @@
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    min-width: 0; /* CRITICAL FIX: Allow shrinking */
 }
 
 .backBtn {
     display: flex;
     align-items: center;
-    gap: clamp(0.25rem, 1vw, 0.5rem); /* OPTIMIZED: responsive gap */
+    gap: 0.4rem;
     padding: 0.5rem 1rem;
     min-height: 44px;
-    min-width: 44px; /* CRITICAL FIX: Ensure minimum touch target */
     max-width: 180px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -82,11 +78,6 @@
     transform: translateX(-2px);
 }
 
-.backBtn:focus-visible {
-    outline: 2px solid var(--unbreak-cyan);
-    outline-offset: 2px;
-}
-
 .backIcon {
     font-size: 1rem;
     line-height: 1;
@@ -96,8 +87,6 @@
 /* Back label visibility (default: full) */
 .backLabelFull {
     display: inline;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .backLabelMedium {
@@ -111,9 +100,8 @@
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: clamp(6px, 1.5vw, 12px); /* OPTIMIZED: responsive gap */
+    gap: 8px;
     flex-wrap: nowrap;
-    min-width: 0; /* CRITICAL FIX: Allow shrinking */
 }
 
 /* ========================================
@@ -125,7 +113,6 @@
     gap: 0.5rem;
     padding: 0.6rem 1.2rem;
     min-height: 44px;
-    min-width: 44px; /* CRITICAL FIX: Ensure minimum touch target */
     background: linear-gradient(135deg, var(--unbreak-cyan), var(--unbreak-cyan-dark));
     border: none;
     border-radius: 8px;
@@ -144,11 +131,6 @@
     filter: brightness(1.1);
 }
 
-.cartBtn:focus-visible {
-    outline: 2px solid var(--unbreak-cyan);
-    outline-offset: 2px;
-}
-
 .cartBtn:disabled {
     opacity: 0.7;
     cursor: not-allowed;
@@ -157,13 +139,10 @@
 .cartIcon {
     font-size: 1.1rem;
     line-height: 1;
-    flex-shrink: 0;
 }
 
 .cartLabel {
     display: inline;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .cartBadge {
@@ -185,6 +164,7 @@
 
 /* ========================================
    LANGUAGE TOGGLE - UNIFIED STYLING
+   Same appearance across ALL breakpoints
    ======================================== */
 .langToggle {
     display: flex;
@@ -192,7 +172,6 @@
     gap: 2px;
     padding: 0.5rem 0.75rem;
     min-height: 44px;
-    min-width: 44px; /* CRITICAL FIX: Ensure minimum touch target */
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
@@ -207,11 +186,6 @@
 .langToggle:hover {
     background: rgba(0, 212, 255, 0.1);
     border-color: rgba(0, 212, 255, 0.3);
-}
-
-.langToggle:focus-visible {
-    outline: 2px solid var(--unbreak-cyan);
-    outline-offset: 2px;
 }
 
 .langOption {
@@ -244,21 +218,19 @@
    ======================================== */
 .variantToggle {
     display: flex;
-    gap: clamp(4px, 1vw, 8px); /* OPTIMIZED: responsive gap */
+    gap: 0.5rem;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(0, 212, 255, 0.15);
     border-radius: 8px;
     padding: 4px;
-    flex: 1 1 auto; /* OPTIMIZED: Allow flexible sizing */
+    flex: 1;
     max-width: 320px;
-    min-width: 0; /* CRITICAL FIX: Allow shrinking */
 }
 
 .variantBtn {
-    flex: 1 1 0; /* OPTIMIZED: Equal flex basis */
-    min-width: 0; /* CRITICAL FIX: Allow text ellipsis */
+    flex: 1;
     padding: 0.5rem 0.75rem;
-    min-height: 44px; /* CRITICAL FIX: Touch target */
+    min-height: 40px;
     background: transparent;
     border: none;
     border-radius: 6px;
@@ -269,18 +241,11 @@
     transition: all 0.2s;
     white-space: nowrap;
     text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .variantBtn:hover {
     background: rgba(0, 212, 255, 0.08);
     color: white;
-}
-
-.variantBtn:focus-visible {
-    outline: 2px solid var(--unbreak-cyan);
-    outline-offset: -2px;
 }
 
 .variantBtn.active {
@@ -295,18 +260,17 @@
 
 .variantLabelShort {
     display: none;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
 }
 
 /* ========================================
-   ACTION GROUP (Colors + Settings + Lang mobile)
+   ACTION GROUP (Colors + Settings)
    ======================================== */
 .actionGroup {
     display: flex;
     align-items: center;
-    gap: clamp(4px, 1vw, 8px); /* OPTIMIZED: responsive gap */
+    gap: 0.5rem;
     flex-wrap: nowrap;
-    min-width: 0; /* CRITICAL FIX: Allow shrinking */
 }
 
 .actionBtn {
@@ -314,8 +278,7 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.5rem 0.75rem;
-    min-height: 44px; /* CRITICAL FIX: Touch target */
-    min-width: 44px; /* CRITICAL FIX: Touch target */
+    min-height: 40px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -324,18 +287,12 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    white-space: nowrap;
 }
 
 .actionBtn:hover {
     background: rgba(0, 212, 255, 0.1);
     border-color: rgba(0, 212, 255, 0.3);
     color: var(--unbreak-cyan);
-}
-
-.actionBtn:focus-visible {
-    outline: 2px solid var(--unbreak-cyan);
-    outline-offset: 2px;
 }
 
 .actionBtn.activePanel {
@@ -347,13 +304,23 @@
 .icon {
     font-size: 1rem;
     line-height: 1;
-    flex-shrink: 0;
 }
 
 .label {
     font-size: 0.8rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
+}
+
+/* ========================================
+   RESPONSIVE: 1024px - Tablet landscape
+   ======================================== */
+@media (max-width: 1024px) {
+    .row1 {
+        padding: 8px 0.75rem;
+    }
+    
+    .row2 {
+        padding: 6px 0.75rem 8px;
+    }
 }
 
 /* ========================================
@@ -364,143 +331,141 @@
     .backLabelFull {
         display: none;
     }
-
+    
     .backLabelMedium {
         display: inline;
     }
-
+    
     .backBtn {
-        max-width: 120px; /* OPTIMIZED: Tighter on tablet */
-        padding: 0.5rem 0.75rem;
+        max-width: 140px;
     }
-
+    
     /* Move language toggle to row 2 */
     .desktopOnly {
         display: none;
     }
-
+    
     .mobileOnly {
         display: flex;
     }
-
-    /* Hide action button labels */
+    
+    /* Action labels hidden */
     .actionBtn .label {
         display: none;
     }
-
+    
     .actionBtn {
-        padding: 0.5rem;
-        gap: 0;
-    }
-
-    /* Optimize variant toggle */
-    .variantToggle {
-        max-width: 260px;
+        padding: 0.5rem 0.6rem;
     }
 }
 
 /* ========================================
-   RESPONSIVE: 500px - Large phone CRITICAL
+   RESPONSIVE: 600px - Small tablet
+   ======================================== */
+@media (max-width: 600px) {
+    .row1 {
+        padding: 6px 0.5rem;
+        min-height: 48px;
+    }
+    
+    .row2 {
+        padding: 4px 0.5rem 8px;
+        gap: 8px;
+    }
+    
+    .variantToggle {
+        max-width: 280px;
+    }
+}
+
+/* ========================================
+   RESPONSIVE: 500px - Large phone
    ======================================== */
 @media (max-width: 500px) {
-    .row1 {
-        gap: clamp(6px, 1.5vw, 10px);
-    }
-
-    .row2 {
-        gap: clamp(6px, 1.5vw, 10px);
-    }
-
-    /* Compact variant toggle */
     .variantToggle {
-        max-width: 200px;
+        max-width: 220px;
     }
-
+    
     .variantBtn {
-        padding: 0.45rem 0.6rem;
+        padding: 0.4rem 0.5rem;
         font-size: 0.8rem;
     }
-
-    /* Cart: Icon only */
+    
     .cartLabel {
         display: none;
     }
-
+    
     .cartBtn {
-        padding: 0.5rem 0.7rem;
+        padding: 0.5rem 0.75rem;
     }
-
-    /* Language toggle: Compact */
+    
     .langToggle {
-        padding: 0.45rem 0.6rem;
-        font-size: 0.75rem;
+        padding: 0.4rem 0.6rem;
     }
 }
 
 /* ========================================
-   RESPONSIVE: 420px - Small phone CRITICAL
+   RESPONSIVE: 420px - Small phone
    ======================================== */
 @media (max-width: 420px) {
-    /* Back button: Icon only */
+    /* Back button icon only */
     .backLabelFull,
     .backLabelMedium {
         display: none;
     }
-
+    
     .backBtn {
-        padding: 0.5rem;
-        max-width: 48px;
-        width: 48px;
+        padding: 0.5rem 0.6rem;
+        max-width: 50px;
     }
-
+    
     .backIcon {
         font-size: 1.2rem;
     }
-
-    /* Variant buttons: Icons only */
+    
+    /* Compact variant buttons - show icons */
     .variantLabelFull {
         display: none;
     }
-
+    
     .variantLabelShort {
         display: inline;
     }
-
+    
     .variantToggle {
         max-width: 140px;
     }
-
+    
     .variantBtn {
         padding: 0.4rem;
-        min-height: 40px; /* Slightly smaller but still tappable */
+        min-height: 36px;
     }
-
-    /* Action buttons: Ultra compact */
+    
+    /* Compact action buttons */
     .actionBtn {
-        padding: 0.4rem;
-        min-height: 40px;
-        min-width: 40px;
+        padding: 0.4rem 0.5rem;
+        min-height: 36px;
     }
-
+    
     .icon {
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
-
-    /* Cart: Icon only, compact */
+    
+    /* Compact cart */
     .cartBtn {
         padding: 0.4rem 0.6rem;
-        min-height: 42px;
+        min-height: 40px;
     }
-
+    
     .cartIcon {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
-
-    /* Language: Compact */
+    
+    /* Compact lang */
     .langToggle {
         padding: 0.35rem 0.5rem;
-        min-height: 40px;
-        font-size: 0.7rem;
+        min-height: 36px;
+        font-size: 0.75rem;
     }
 }
 
@@ -508,49 +473,24 @@
    RESPONSIVE: 360px - Extra small phone
    ======================================== */
 @media (max-width: 360px) {
-    .row1,
-    .row2 {
+    .row1 {
+        padding: 4px 0.4rem;
         gap: 6px;
-        padding-left: 0.4rem;
-        padding-right: 0.4rem;
     }
-
+    
+    .row2 {
+        padding: 4px 0.4rem 6px;
+        gap: 6px;
+    }
+    
     .variantToggle {
         max-width: 120px;
-        padding: 3px;
-        gap: 3px;
     }
-
-    .variantBtn {
-        min-height: 38px;
-        padding: 0.3rem;
-    }
-
+    
     .actionGroup {
         gap: 4px;
     }
-
-    .actionBtn {
-        min-height: 38px;
-        min-width: 38px;
-        padding: 0.35rem;
-    }
-
-    .backBtn {
-        width: 44px;
-        padding: 0.45rem;
-    }
-
-    .cartBtn {
-        padding: 0.35rem 0.55rem;
-        min-height: 40px;
-    }
-
-    .langToggle {
-        padding: 0.3rem 0.45rem;
-        min-height: 38px;
-    }
-
+    
     .cartBadge {
         min-width: 16px;
         height: 16px;
@@ -566,84 +506,35 @@
 @media (max-width: 320px) {
     .row1,
     .row2 {
+        padding: 4px 0.3rem;
         gap: 4px;
-        padding-left: 0.3rem;
-        padding-right: 0.3rem;
     }
-
+    
     .backBtn {
-        width: 40px;
-        padding: 0.4rem;
-        min-height: 40px;
+        padding: 0.4rem 0.5rem;
     }
-
+    
     .cartBtn {
-        padding: 0.3rem 0.5rem;
-        min-height: 38px;
+        padding: 0.35rem 0.5rem;
     }
-
+    
     .langToggle {
-        padding: 0.25rem 0.4rem;
-        min-height: 36px;
-        font-size: 0.65rem;
+        padding: 0.3rem 0.4rem;
+        font-size: 0.7rem;
     }
-
+    
     .variantToggle {
         max-width: 100px;
         padding: 2px;
-        gap: 2px;
     }
-
+    
     .variantBtn {
-        padding: 0.25rem;
-        min-height: 36px;
-        font-size: 1rem; /* Icon size */
-    }
-
-    .actionBtn {
         padding: 0.3rem;
-        min-height: 36px;
-        min-width: 36px;
+        min-height: 32px;
     }
-
-    .icon {
-        font-size: 0.95rem;
-    }
-}
-
-/* ========================================
-   A11Y: Focus Visible (Keyboard Navigation)
-   ======================================== */
-button:focus-visible {
-    outline: 2px solid var(--unbreak-cyan);
-    outline-offset: 2px;
-}
-
-/* ========================================
-   A11Y: High Contrast Mode Support
-   ======================================== */
-@media (prefers-contrast: high) {
-    .backBtn,
-    .cartBtn,
-    .langToggle,
-    .variantBtn,
+    
     .actionBtn {
-        border-width: 2px;
-    }
-
-    .variantBtn.active,
-    .actionBtn.activePanel {
-        border-width: 3px;
-    }
-}
-
-/* ========================================
-   A11Y: Reduced Motion
-   ======================================== */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+        padding: 0.3rem 0.4rem;
+        min-height: 32px;
     }
 }

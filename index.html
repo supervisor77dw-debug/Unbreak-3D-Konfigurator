@@ -4,19 +4,41 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="UNBREAK-ONE 3D Konfigurator – Glashalter & Flaschenhalter konfigurieren, Farben wählen, direkt zum Shop zurück." />
-    <meta name="theme-color" content="#0a0a0a" />
-    <title>UNBREAK ONE – Konfigurator</title>
     
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="UNBREAK-ONE 3D Konfigurator: Gestalten Sie Ihren individuellen Glashalter oder Flaschenhalter. W�hlen Sie Farben, Materialien und Design  direkt online konfigurieren." />
+    <meta name="keywords" content="UNBREAK ONE, Konfigurator, 3D, Glashalter, Flaschenhalter, Konfigurieren, Custom, Individuell" />
+    <meta name="author" content="UNBREAK ONE" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="UNBREAK ONE  3D Konfigurator" />
+    <meta property="og:description" content="Gestalten Sie Ihren individuellen Glashalter oder Flaschenhalter im 3D-Konfigurator." />
+    <meta property="og:url" content="https://unbreak-3-d-konfigurator.vercel.app/" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="UNBREAK ONE  3D Konfigurator" />
+    <meta name="twitter:description" content="Gestalten Sie Ihren individuellen Glashalter oder Flaschenhalter im 3D-Konfigurator." />
+    
+    <!-- Theme & PWA -->
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="application-name" content="UNBREAK ONE Konfigurator" />
+    
+    <!-- Title -->
+    <title>UNBREAK ONE  3D Konfigurator | Glashalter & Flaschenhalter gestalten</title>
+
     <!-- Preconnect to critical origins -->
     <link rel="preconnect" href="https://www.unbreak-one.com" />
-    
+    <link rel="dns-prefetch" href="https://www.unbreak-one.com" />
+
     <!-- Preload critical CSS -->
     <style>
       /* Critical CSS for immediate render */
       :root {
         --unbreak-black: #0a0a0a;
         --unbreak-cyan: #00d4ff;
+        --unbreak-cyan-dark: #0891b2;
         --text-primary: #ffffff;
         --text-secondary: #a0a0a0;
       }
@@ -24,17 +46,43 @@
         margin: 0;
         background: #0a0a0a;
         color: #ffffff;
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
       #root {
         min-height: 100vh;
         display: flex;
         flex-direction: column;
       }
+      /* Loading fallback */
+      .loading-fallback {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0a0a0a;
+      }
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #00d4ff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fallback loading indicator (removed once React renders) -->
+      <div class="loading-fallback" aria-live="polite" aria-label="Loading configurator">
+        <div class="loading-spinner" role="status"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

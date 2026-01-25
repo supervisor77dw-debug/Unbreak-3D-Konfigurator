@@ -193,9 +193,12 @@ const Part = ({ url, color, renderOrder = 0, smoothNormals = false, isFixedBlack
 
     // Smooth Color Animation with invalidate() for frameloop="demand"
     useFrame((state, delta) => {
-        if (materialRef.current && !isFixedBlack) {
-            // Check if color needs animation
-            const distance = currentColor.current.distanceTo(targetColor);
+        if (materialRef.current && !isFixedBlack && currentColor.current) {
+            // Calculate color distance manually (THREE.Color has no distanceTo method)
+            const dr = currentColor.current.r - targetColor.r;
+            const dg = currentColor.current.g - targetColor.g;
+            const db = currentColor.current.b - targetColor.b;
+            const distance = Math.sqrt(dr * dr + dg * dg + db * db);
             
             if (distance > 0.001) {
                 // Smoothly lerp to target color
