@@ -34,6 +34,8 @@ export const translations = {
         products: {
             glass_holder: 'Glashalter',
             bottle_holder: 'Flaschenhalter',
+            glass_short: 'Glas',
+            bottle_short: 'Flasche',
         },
         
         // UI Elements
@@ -112,6 +114,8 @@ export const translations = {
         products: {
             glass_holder: 'Glass Holder',
             bottle_holder: 'Bottle Holder',
+            glass_short: 'Glass',
+            bottle_short: 'Bottle',
         },
         
         // UI Elements

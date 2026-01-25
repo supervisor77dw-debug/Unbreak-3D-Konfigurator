@@ -1,6 +1,18 @@
-/* TopBar.module.css - OPTIMIZED Responsive 2-Row Layout */
-/* FIX: Mobile Header Lighthouse Optimierungen */
+/* TopBar.module.css - RESPONSIVE Header with SVG Icons */
+/* FIX: Icons never disappear - always SVG-based */
+/* FIX: DE/EN Toggle styled like unbreak-one.com */
 /* Version: 2026-01-25 */
+
+/* ========================================
+   CSS VARIABLES (matching unbreak-one.com)
+   ======================================== */
+:root {
+    --unbreak-cyan: #00d4ff;
+    --unbreak-cyan-dark: #00a8cc;
+    --unbreak-black: #0a0a0a;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+}
 
 /* ========================================
    BASE CONTAINER
@@ -29,7 +41,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px clamp(0.5rem, 2vw, 1rem);
-    gap: clamp(8px, 2vw, 16px); /* OPTIMIZED: responsive gap */
+    gap: clamp(8px, 2vw, 16px);
     min-height: 52px;
 }
 
@@ -41,7 +53,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 6px clamp(0.5rem, 2vw, 1rem) 10px;
-    gap: clamp(8px, 2vw, 16px); /* OPTIMIZED: responsive gap */
+    gap: clamp(8px, 2vw, 16px);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -52,17 +64,16 @@
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    min-width: 0; /* CRITICAL FIX: Allow shrinking */
+    min-width: 0;
 }
 
 .backBtn {
     display: flex;
     align-items: center;
-    gap: clamp(0.25rem, 1vw, 0.5rem); /* OPTIMIZED: responsive gap */
+    gap: 0.5rem;
     padding: 0.5rem 1rem;
     min-height: 44px;
-    min-width: 44px; /* CRITICAL FIX: Ensure minimum touch target */
-    max-width: 180px;
+    min-width: 44px; /* CRITICAL: Never shrink below touch target */
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
@@ -71,8 +82,6 @@
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .backBtn:hover {
@@ -87,23 +96,6 @@
     outline-offset: 2px;
 }
 
-.backIcon {
-    font-size: 1rem;
-    line-height: 1;
-    flex-shrink: 0;
-}
-
-/* Back label visibility (default: full) */
-.backLabelFull {
-    display: inline;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.backLabelMedium {
-    display: none;
-}
-
 /* ========================================
    ZONE RIGHT - Cart + Language
    ======================================== */
@@ -111,9 +103,9 @@
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: clamp(6px, 1.5vw, 12px); /* OPTIMIZED: responsive gap */
+    gap: clamp(8px, 1.5vw, 12px);
     flex-wrap: nowrap;
-    min-width: 0; /* CRITICAL FIX: Allow shrinking */
+    min-width: 0;
 }
 
 /* ========================================
@@ -125,7 +117,7 @@
     gap: 0.5rem;
     padding: 0.6rem 1.2rem;
     min-height: 44px;
-    min-width: 44px; /* CRITICAL FIX: Ensure minimum touch target */
+    min-width: 44px; /* CRITICAL: Never shrink below touch target */
     background: linear-gradient(135deg, var(--unbreak-cyan), var(--unbreak-cyan-dark));
     border: none;
     border-radius: 8px;
@@ -154,18 +146,6 @@
     cursor: not-allowed;
 }
 
-.cartIcon {
-    font-size: 1.1rem;
-    line-height: 1;
-    flex-shrink: 0;
-}
-
-.cartLabel {
-    display: inline;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 .cartBadge {
     position: absolute;
     top: -6px;
@@ -184,18 +164,27 @@
 }
 
 /* ========================================
-   LANGUAGE TOGGLE - UNIFIED STYLING
+   LANGUAGE TOGGLE - UNBREAK-ONE.COM STYLE
+   Two separate buttons DE | EN with pill design
    ======================================== */
-.langToggle {
+.langToggleWrapper {
     display: flex;
     align-items: center;
-    gap: 2px;
-    padding: 0.5rem 0.75rem;
-    min-height: 44px;
-    min-width: 44px; /* CRITICAL FIX: Ensure minimum touch target */
+    gap: 0;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
+    padding: 2px;
+    min-height: 40px;
+}
+
+.langBtn {
+    padding: 6px 10px;
+    min-width: 36px;
+    min-height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
     color: var(--text-secondary);
     font-size: 0.8rem;
     font-weight: 600;
@@ -204,30 +193,20 @@
     letter-spacing: 0.5px;
 }
 
-.langToggle:hover {
-    background: rgba(0, 212, 255, 0.1);
-    border-color: rgba(0, 212, 255, 0.3);
+.langBtn:hover:not(.langActive) {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
 }
 
-.langToggle:focus-visible {
+.langBtn:focus-visible {
     outline: 2px solid var(--unbreak-cyan);
-    outline-offset: 2px;
+    outline-offset: -2px;
 }
 
-.langOption {
-    padding: 2px 4px;
-    border-radius: 3px;
-    transition: all 0.2s ease;
-}
-
-.langOption.langActive {
+.langBtn.langActive {
+    background: rgba(0, 212, 255, 0.2);
     color: var(--unbreak-cyan);
-    background: rgba(0, 212, 255, 0.15);
-}
-
-.langDivider {
-    color: rgba(255, 255, 255, 0.3);
-    font-weight: 300;
+    font-weight: 700;
 }
 
 /* Desktop/Mobile visibility */
@@ -244,21 +223,25 @@
    ======================================== */
 .variantToggle {
     display: flex;
-    gap: clamp(4px, 1vw, 8px); /* OPTIMIZED: responsive gap */
+    gap: clamp(4px, 1vw, 8px);
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(0, 212, 255, 0.15);
     border-radius: 8px;
     padding: 4px;
-    flex: 1 1 auto; /* OPTIMIZED: Allow flexible sizing */
-    max-width: 320px;
-    min-width: 0; /* CRITICAL FIX: Allow shrinking */
+    flex: 1 1 auto;
+    max-width: 340px;
+    min-width: 100px; /* CRITICAL: Never shrink to zero */
 }
 
 .variantBtn {
-    flex: 1 1 0; /* OPTIMIZED: Equal flex basis */
-    min-width: 0; /* CRITICAL FIX: Allow text ellipsis */
+    flex: 1 1 0;
+    min-width: 48px; /* CRITICAL: Icon always visible */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     padding: 0.5rem 0.75rem;
-    min-height: 44px; /* CRITICAL FIX: Touch target */
+    min-height: 44px;
     background: transparent;
     border: none;
     border-radius: 6px;
@@ -268,9 +251,6 @@
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .variantBtn:hover {
@@ -289,33 +269,25 @@
     font-weight: 600;
 }
 
-.variantLabelFull {
-    display: inline;
-}
-
-.variantLabelShort {
-    display: none;
-    font-size: 1.2rem;
-}
-
 /* ========================================
    ACTION GROUP (Colors + Settings + Lang mobile)
    ======================================== */
 .actionGroup {
     display: flex;
     align-items: center;
-    gap: clamp(4px, 1vw, 8px); /* OPTIMIZED: responsive gap */
+    gap: clamp(6px, 1vw, 10px);
     flex-wrap: nowrap;
-    min-width: 0; /* CRITICAL FIX: Allow shrinking */
+    min-width: 0;
 }
 
 .actionBtn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
     padding: 0.5rem 0.75rem;
-    min-height: 44px; /* CRITICAL FIX: Touch target */
-    min-width: 44px; /* CRITICAL FIX: Touch target */
+    min-height: 44px;
+    min-width: 44px; /* CRITICAL: Icon always visible */
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -344,36 +316,34 @@
     color: var(--unbreak-cyan);
 }
 
-.icon {
-    font-size: 1rem;
-    line-height: 1;
+/* ========================================
+   ICON & LABEL WRAPPERS
+   CRITICAL: Icon wrapper ALWAYS visible
+   ======================================== */
+.iconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
+    width: 20px;
+    height: 20px;
 }
 
-.label {
-    font-size: 0.8rem;
+.iconWrapper svg {
+    width: 100%;
+    height: 100%;
+}
+
+.labelText {
+    font-size: inherit;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 /* ========================================
-   RESPONSIVE: 768px - Tablet/Mobile breakpoint
+   RESPONSIVE: 768px - Tablet breakpoint
    ======================================== */
 @media (max-width: 768px) {
-    /* Show medium back label */
-    .backLabelFull {
-        display: none;
-    }
-
-    .backLabelMedium {
-        display: inline;
-    }
-
-    .backBtn {
-        max-width: 120px; /* OPTIMIZED: Tighter on tablet */
-        padding: 0.5rem 0.75rem;
-    }
-
     /* Move language toggle to row 2 */
     .desktopOnly {
         display: none;
@@ -383,26 +353,17 @@
         display: flex;
     }
 
-    /* Hide action button labels */
-    .actionBtn .label {
-        display: none;
-    }
-
-    .actionBtn {
-        padding: 0.5rem;
-        gap: 0;
-    }
-
     /* Optimize variant toggle */
     .variantToggle {
-        max-width: 260px;
+        max-width: 280px;
     }
 }
 
 /* ========================================
-   RESPONSIVE: 500px - Large phone CRITICAL
+   RESPONSIVE: 600px - Medium breakpoint
+   show short text
    ======================================== */
-@media (max-width: 500px) {
+@media (max-width: 600px) {
     .row1 {
         gap: clamp(6px, 1.5vw, 10px);
     }
@@ -413,7 +374,7 @@
 
     /* Compact variant toggle */
     .variantToggle {
-        max-width: 200px;
+        max-width: 220px;
     }
 
     .variantBtn {
@@ -421,86 +382,64 @@
         font-size: 0.8rem;
     }
 
-    /* Cart: Icon only */
-    .cartLabel {
-        display: none;
-    }
-
-    .cartBtn {
-        padding: 0.5rem 0.7rem;
-    }
-
     /* Language toggle: Compact */
-    .langToggle {
-        padding: 0.45rem 0.6rem;
+    .langToggleWrapper {
+        padding: 2px;
+    }
+
+    .langBtn {
+        padding: 5px 8px;
         font-size: 0.75rem;
+        min-width: 32px;
     }
 }
 
 /* ========================================
-   RESPONSIVE: 420px - Small phone CRITICAL
+   RESPONSIVE: 420px - Small phone
+   Icon only for variant buttons
    ======================================== */
 @media (max-width: 420px) {
-    /* Back button: Icon only */
-    .backLabelFull,
-    .backLabelMedium {
-        display: none;
-    }
-
+    /* Back button: Icon only (text removed in JSX) */
     .backBtn {
         padding: 0.5rem;
         max-width: 48px;
-        width: 48px;
     }
 
-    .backIcon {
-        font-size: 1.2rem;
-    }
-
-    /* Variant buttons: Icons only */
-    .variantLabelFull {
-        display: none;
-    }
-
-    .variantLabelShort {
-        display: inline;
-    }
-
+    /* Variant buttons: Icon only */
     .variantToggle {
         max-width: 140px;
     }
 
     .variantBtn {
         padding: 0.4rem;
-        min-height: 40px; /* Slightly smaller but still tappable */
+        min-height: 42px;
+        gap: 0;
     }
 
-    /* Action buttons: Ultra compact */
+    /* Action buttons: Compact */
     .actionBtn {
         padding: 0.4rem;
-        min-height: 40px;
-        min-width: 40px;
+        min-height: 42px;
+        min-width: 42px;
     }
 
-    .icon {
-        font-size: 1rem;
-    }
-
-    /* Cart: Icon only, compact */
+    /* Cart: Icon only (text removed in JSX) */
     .cartBtn {
-        padding: 0.4rem 0.6rem;
+        padding: 0.5rem 0.6rem;
         min-height: 42px;
     }
 
-    .cartIcon {
-        font-size: 1.1rem;
+    /* Language: Compact */
+    .langToggleWrapper {
+        padding: 2px;
+        min-height: 38px;
     }
 
-    /* Language: Compact */
-    .langToggle {
-        padding: 0.35rem 0.5rem;
-        min-height: 40px;
+    .langBtn {
+        padding: 4px 7px;
         font-size: 0.7rem;
+        min-width: 28px;
+        min-height: 28px;
     }
 }
 
@@ -522,17 +461,17 @@
     }
 
     .variantBtn {
-        min-height: 38px;
-        padding: 0.3rem;
+        min-height: 40px;
+        padding: 0.35rem;
     }
 
     .actionGroup {
-        gap: 4px;
+        gap: 5px;
     }
 
     .actionBtn {
-        min-height: 38px;
-        min-width: 38px;
+        min-height: 40px;
+        min-width: 40px;
         padding: 0.35rem;
     }
 
@@ -542,13 +481,20 @@
     }
 
     .cartBtn {
-        padding: 0.35rem 0.55rem;
+        padding: 0.4rem 0.55rem;
         min-height: 40px;
     }
 
-    .langToggle {
-        padding: 0.3rem 0.45rem;
-        min-height: 38px;
+    .langToggleWrapper {
+        padding: 1px;
+        min-height: 36px;
+    }
+
+    .langBtn {
+        padding: 3px 6px;
+        min-width: 26px;
+        min-height: 26px;
+        font-size: 0.65rem;
     }
 
     .cartBadge {
@@ -578,14 +524,19 @@
     }
 
     .cartBtn {
-        padding: 0.3rem 0.5rem;
+        padding: 0.35rem 0.5rem;
         min-height: 38px;
     }
 
-    .langToggle {
-        padding: 0.25rem 0.4rem;
-        min-height: 36px;
-        font-size: 0.65rem;
+    .langToggleWrapper {
+        min-height: 34px;
+    }
+
+    .langBtn {
+        padding: 2px 5px;
+        min-width: 24px;
+        min-height: 24px;
+        font-size: 0.6rem;
     }
 
     .variantToggle {
@@ -595,19 +546,19 @@
     }
 
     .variantBtn {
-        padding: 0.25rem;
-        min-height: 36px;
-        font-size: 1rem; /* Icon size */
+        padding: 0.3rem;
+        min-height: 38px;
     }
 
     .actionBtn {
         padding: 0.3rem;
-        min-height: 36px;
-        min-width: 36px;
+        min-height: 38px;
+        min-width: 38px;
     }
 
-    .icon {
-        font-size: 0.95rem;
+    .iconWrapper {
+        width: 18px;
+        height: 18px;
     }
 }
 
@@ -625,14 +576,15 @@ button:focus-visible {
 @media (prefers-contrast: high) {
     .backBtn,
     .cartBtn,
-    .langToggle,
+    .langToggleWrapper,
     .variantBtn,
     .actionBtn {
         border-width: 2px;
     }
 
     .variantBtn.active,
-    .actionBtn.activePanel {
+    .actionBtn.activePanel,
+    .langBtn.langActive {
         border-width: 3px;
     }
 }
