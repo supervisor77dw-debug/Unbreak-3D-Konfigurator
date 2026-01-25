@@ -20,8 +20,8 @@ export default defineConfig({
     },
     // Target modern browsers for smaller output
     target: 'es2020',
-    // Increase chunk size warning limit (Three.js is large)
-    chunkSizeWarningLimit: 600,
+    // Increase chunk size warning limit (Three.js ecosystem is ~720KB gzipped)
+    chunkSizeWarningLimit: 800,
   },
   // Optimize dev server
   server: {
